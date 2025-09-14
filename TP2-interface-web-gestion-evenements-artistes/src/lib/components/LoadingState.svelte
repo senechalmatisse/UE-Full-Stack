@@ -1,0 +1,119 @@
+<script lang="ts">
+	/**
+	 * Loading state flag.
+	 * When true, the loading indicator is displayed.
+	 */
+	export let isLoading = false;
+
+	/**
+	 * Error message string.
+	 * When not null, an error message is displayed.
+	 */
+	export let error: string | null = null;
+
+	/**
+	 * Message to display during loading.
+	 * Defaults to 'Loading...'.
+	 */
+	export let loadingMessage = 'Chargement...';
+
+	/**
+	 * Optional retry callback.
+	 * When provided, a "Retry" button will be rendered to allow the user to re-trigger the action.
+	 */
+	export let onRetry: (() => void) | null = null;
+</script>
+
+{#if error}
+	<!-- 
+		Error message container. 
+		Uses role="alert" and aria-live="polite" for screen readers.
+	-->
+	<div class="error-message" role="alert" aria-live="polite">
+		<p>{error}</p>
+		{#if onRetry}
+			<button 
+				class="retry-btn" 
+				on:click={onRetry}
+				aria-label="Retry loading"
+			>
+				Retry
+			</button>
+		{/if}
+	</div>
+{/if}
+
+{#if isLoading}
+	<!-- 
+		Loading state container. 
+		Uses role="status" and aria-live="polite" for screen readers.
+	-->
+	<div class="loading" role="status" aria-live="polite">
+		<div class="loading-spinner" aria-hidden="true"></div>
+		<p>{loadingMessage}</p>
+	</div>
+{/if}
+
+<style>
+	/* Loading container styling */
+	.loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 3rem;
+		color: #666;
+	}
+
+	/* Spinner animation */
+	.loading-spinner {
+		width: 40px;
+		height: 40px;
+		border: 4px solid #f3f3f3;
+		border-top: 4px solid #007bff;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+		margin-bottom: 1rem;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
+
+	/* Error message container styling */
+	.error-message {
+		background: #f8d7da;
+		border: 1px solid #f5c6cb;
+		color: #721c24;
+		padding: 1rem;
+		border-radius: 4px;
+		margin-bottom: 1rem;
+		text-align: center;
+	}
+
+	/* Retry button styling */
+	.retry-btn {
+		background: #dc3545;
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-top: 0.5rem;
+		transition: background-color 0.2s ease;
+	}
+
+	.retry-btn:hover, .retry-btn:focus {
+		background: #c82333;
+		outline: 2px solid #c82333;
+		outline-offset: 2px;
+	}
+
+	/* Respect reduced motion preference */
+	@media (prefers-reduced-motion: reduce) {
+		.loading-spinner {
+			animation: none;
+		}
+	}
+</style>
