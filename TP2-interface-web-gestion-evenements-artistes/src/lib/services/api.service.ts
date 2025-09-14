@@ -149,6 +149,40 @@ export class ApiService<T> implements DataService<T> {
 		console.error('API Error:', err);
 		throw error(503, 'Communication error with the server');
 	}
+
+    async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    	const baseUrl = this.config.baseUrl.replace(/\/$/, '');
+    	const cleanEndpoint = endpoint.replace(/^\//, '');
+    	const url = `${baseUrl}/${cleanEndpoint}`;
+
+    	const controller = new AbortController();
+    	const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    	try {
+    		const response = await fetch(url, {
+    			headers: this.config.defaultHeaders,
+    			signal: controller.signal,
+    			...options
+    		});
+
+    		clearTimeout(timeoutId);
+
+    		if (!response.ok) {
+    			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    		}
+
+    		// Pas de contenu (DELETE 204 par ex.)
+    		if (response.status === 204) {
+    			return null as T;
+    		}
+
+    		const data = await response.json();
+    		return data as T;
+    	} catch (err) {
+    		clearTimeout(timeoutId);
+    		this.handleError(err);
+    	}
+    }
 }
 
 /**

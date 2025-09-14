@@ -27,7 +27,7 @@
 	$: additionalArtists = event.artists.length > 2 ? event.artists.length - 2 : 0;
 </script>
 
-<li id={`event-${event.id}`} class="event-card" role="listitem">
+<li id={`event-${event.id}`} class="event-card">
 	<!-- Event title -->
 	<h2 class="event-title">{event.label}</h2>
 	
@@ -44,21 +44,15 @@
 	<!-- Artists list -->
 	{#if event.artists.length > 0}
 		<p class="event-artists">
-			<span 
-				class="artists-count" 
-				aria-label="{event.artists.length} artist{event.artists.length > 1 ? 's' : ''}"
-			>
+			<span class="artists-count">
 				{event.artists.length} Artiste{event.artists.length > 1 ? 's ' : ' '}:
 			</span>
 			<span class="event-artists-list">
 				{artistsDisplay}
 			</span>
 			{#if additionalArtists > 0}
-				<span 
-					class="event-artists-more" 
-					aria-label="and {additionalArtists} more artists"
-				>
-					… (+{additionalArtists} en plus)
+				<span class="event-artists-more">
+					... (+{additionalArtists} en plus)
 				</span>
 			{/if}
 		</p>

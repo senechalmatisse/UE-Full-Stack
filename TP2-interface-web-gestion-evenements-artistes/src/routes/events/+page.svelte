@@ -84,16 +84,16 @@
 </script>
 
 <svelte:head>
-	<title>Event List - Page {data.page}</title>
+	<title>Liste des événements - Page {data.page}</title>
 	<meta name="description" content="Discover all available events. Page {data.page} of {data.totalPages}." />
 </svelte:head>
 
 <section id="events-section">
 	<header>
-		<h1 class="events-title">Event List</h1>
+		<h1 class="events-title">Liste des événements</h1>
 	</header>
 	
-	<main>
+	<div>
 		<!-- Loading and error states -->
 		<LoadingState 
 			isLoading={loadingState.isLoading}
@@ -102,7 +102,7 @@
 			onRetry={handleRetry}
 		/>
 
-		<!-- Main content -->
+		<!-- Div content -->
 		{#if !loadingState.isLoading}
 			<EventsList 
 				events={data.events} 
@@ -118,7 +118,7 @@
 				/>
 			{/if}
 		{/if}
-	</main>
+	</div>
 </section>
 
 <style>

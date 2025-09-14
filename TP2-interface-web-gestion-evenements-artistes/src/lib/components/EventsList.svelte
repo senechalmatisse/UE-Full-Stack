@@ -27,7 +27,7 @@
 	<p class="events-empty">{emptyMessage}</p>
 {:else}
 	<!-- List of events -->
-	<ul class="events-list" role="list">
+	<ul class="events-list">
 		{#each events as event (event.id)}
 			<EventCard {event} {dateFormatter} />
 		{/each}

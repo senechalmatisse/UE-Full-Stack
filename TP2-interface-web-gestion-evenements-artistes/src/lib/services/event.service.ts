@@ -39,6 +39,31 @@ export class EventService {
 		};
 	}
 
+	async getEventById(id: string): Promise<Event> {
+		const event = await this.apiService.request<Event>(`events/${id}`);
+		return this.sanitizeEvent(event);
+	}
+
+	async updateEvent(id: string, payload: { label: string; startDate: string; endDate: string }): Promise<Event> {
+		const event = await this.apiService.request<Event>(`events/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(payload)
+		});
+		return this.sanitizeEvent(event);
+	}
+
+	async deleteEvent(id: string): Promise<void> {
+		await this.apiService.request<void>(`events/${id}`, { method: 'DELETE' });
+	}
+
+	async addArtistToEvent(eventId: string, artistId: string): Promise<void> {
+		await this.apiService.request<void>(`events/${eventId}/artists/${artistId}`, { method: 'POST' });
+	}
+
+	async removeArtistFromEvent(eventId: string, artistId: string): Promise<void> {
+		await this.apiService.request<void>(`events/${eventId}/artists/${artistId}`, { method: 'DELETE' });
+	}
+
 	/**
 	 * Sanitizes and validates a single event object.
 	 *
@@ -55,7 +80,7 @@ export class EventService {
 			startDate: DataValidator.sanitizeString(event.startDate),
 			endDate: DataValidator.sanitizeString(event.endDate),
 			artists: Array.isArray(event.artists) 
-				? event.artists.map(artist => this.sanitizeArtist(artist))
+				? event.artists.map((artist: any) => this.sanitizeArtist(artist))
 				: []
 		};
 	}
