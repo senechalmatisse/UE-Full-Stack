@@ -3,6 +3,7 @@
 	import { createEventService } from '../services/event.service';
 	import { DateFormatterFactory } from '../utils/formatters';
 	import { createEventDispatcher } from 'svelte';
+    import { notifications } from '../stores/notification.store';
 
 	export let event: Event;
 
@@ -14,18 +15,15 @@
 	let startDate = event.startDate;
 	let endDate = event.endDate;
 	let isSaving = false;
-	let errorMessage: string | null = null;
 
 	async function save() {
-		errorMessage = null;
-
 		if (!label.trim()) {
-			errorMessage = 'Le nom est obligatoire';
+    		notifications.error('Le nom est obligatoire');
 			return;
 		}
 
 		if (new Date(startDate) >= new Date(endDate)) {
-			errorMessage = 'La date de fin doit être après la date de début';
+    		notifications.error('La date de fin doit être après la date de début');
 			return;
 		}
 
@@ -34,9 +32,9 @@
 			const updated = await eventService.updateEvent(event.id, { label, startDate, endDate });
 			event = updated;
             dispatch('updated', updated);
+    		notifications.success('Événement mis à jour avec succès');
 		} catch (e) {
-			errorMessage = 'Erreur lors de la mise à jour';
-			console.error(e);
+    		notifications.error('Erreur lors de la mise à jour');
 		} finally {
 			isSaving = false;
 		}
@@ -46,10 +44,15 @@
 <section>
 	<h2>Informations sur l’événement</h2>
 
+	<p>
+		Du <time datetime={event.startDate}>{dateFormatter.format(event.startDate)}</time>
+		au <time datetime={event.endDate}>{dateFormatter.format(event.endDate)}</time>
+	</p>
+
 	<form on:submit|preventDefault={save}>
 		<div>
 			<label for="label">Nom</label>
-			<input id="label" bind:value={label} required />
+			<input id="label" bind:value={label} minlength="3" required />
 		</div>
 
 		<div>
@@ -62,22 +65,16 @@
 			<input type="date" id="endDate" bind:value={endDate} required />
 		</div>
 
-		{#if errorMessage}
-			<p class="error">{errorMessage}</p>
-		{/if}
-
 		<button type="submit" disabled={isSaving}>
 			{isSaving ? 'Enregistrement...' : 'Enregistrer'}
 		</button>
 	</form>
-
-	<p>
-		Du <time datetime={event.startDate}>{dateFormatter.format(event.startDate)}</time>
-		au <time datetime={event.endDate}>{dateFormatter.format(event.endDate)}</time>
-	</p>
 </section>
 
 <style>
-	.error { color: red; }
-	form { display: flex; flex-direction: column; gap: .5rem; }
+	form {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
 </style>

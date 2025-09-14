@@ -176,8 +176,12 @@ export class ApiService<T> implements DataService<T> {
     			return null as T;
     		}
 
-    		const data = await response.json();
-    		return data as T;
+    		const text = await response.text();
+    		if (!text) {
+    			return null as T;
+    		}
+
+    		return JSON.parse(text) as T;
     	} catch (err) {
     		clearTimeout(timeoutId);
     		this.handleError(err);

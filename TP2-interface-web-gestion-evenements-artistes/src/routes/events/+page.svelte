@@ -7,6 +7,7 @@
 	import Pagination from '../../lib/components/Pagination.svelte';
 	import LoadingState from '../../lib/components/LoadingState.svelte';
 	import { onMount, onDestroy } from 'svelte';
+    import { notifications } from '../../lib/stores/notification.store';
 
 	/**
 	 * Props received from the server containing events and pagination state.
@@ -54,10 +55,10 @@
 		} catch (error) {
 			const errorMessage = error instanceof Error 
 				? error.message 
-				: 'Error while changing page. Please try again.';
+				: 'Erreur lors du  chargement de la page. Réessayez.';
 			
+            notifications.error(errorMessage);
 			loadingManager.setError(errorMessage);
-			console.error('Navigation error:', error);
 		}
 	}
 
@@ -98,7 +99,7 @@
 		<LoadingState 
 			isLoading={loadingState.isLoading}
 			error={loadingState.error}
-			loadingMessage="Loading events..."
+			loadingMessage="Chargement des événements..."
 			onRetry={handleRetry}
 		/>
 
@@ -106,7 +107,7 @@
 		{#if !loadingState.isLoading}
 			<EventsList 
 				events={data.events} 
-				emptyMessage="No events found."
+				emptyMessage="Aucun événement trouvé."
 			/>
 
 			<!-- Pagination (only if there are events) -->
