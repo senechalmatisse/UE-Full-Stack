@@ -99,7 +99,7 @@ export class ApiService<T> implements DataService<T> {
 			clearTimeout(timeoutId);
 
 			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw error(response.status, response.statusText || 'Erreur serveur');
 			}
 
 			return response;

@@ -27,12 +27,33 @@ class EventsPageController {
 	async loadPageData(url: URL): Promise<{ events: Event[] } & PaginationState> {
 		const { page, size } = this.validateParams(url);
 		const apiPage = this.paginationValidator.toApiPage(page);
-		
-		const response = await this.eventService.getEvents({ page: apiPage, size });
-		this.validatePageConsistency(page, response.totalPages);
-		
-		return this.transformForView(response);
-	}
+
+		let response;
+		try {
+			response = await this.eventService.getEvents({ page: apiPage, size });
+
+			// Vérification que la réponse est bien conforme
+			if (!response || !Array.isArray(response.content)) {
+				return this.buildEmptyState(page, size, 'Réponse invalide du serveur pour les événements');
+			}
+
+			// Vérification cohérence pagination
+			if (page > response.totalPages && response.totalPages > 0) {
+				return this.buildEmptyState(page, size, `Page ${page} introuvable. Il n’y a que ${response.totalPages} page(s) d’événements.`);
+			}
+
+			// Tout est OK → transformer pour la vue
+			return this.transformForView(response);
+		} catch (err) {
+			// Erreur API → renvoyer un objet vide avec message d'erreur
+			const message =
+				err instanceof Error
+					? err.message
+					: 'Impossible de charger les événements depuis le serveur';
+
+			return this.buildEmptyState(page, size, message);
+		}
+    }
 
 	/**
 	 * Validates URL query parameters for pagination.
@@ -45,22 +66,6 @@ class EventsPageController {
 		const sizeParam = url.searchParams.get('size');
 		
 		return this.paginationValidator.validate(pageParam, sizeParam);
-	}
-
-	/**
-	 * Ensures the requested page exists within total available pages.
-	 * Throws a 404 error if requested page is out of bounds.
-     *
-	 * @param requestedPage - Page requested by the user
-	 * @param totalPages - Total number of pages available
-	 */
-	private validatePageConsistency(requestedPage: number, totalPages: number): void {
-		if (requestedPage > totalPages && totalPages > 0) {
-			const plural = totalPages > 1 ? 's' : '';
-			throw error(404, 
-				`Page ${requestedPage} not found. There are only ${totalPages} page${plural} of events`
-			);
-		}
 	}
 
 	/**
@@ -80,6 +85,19 @@ class EventsPageController {
 			size: DataValidator.sanitizeNumber(response.size, 4)
 		};
 	}
+
+    private buildEmptyState(page: number, size: number, errorMessage: string) {
+		return {
+			events: [],
+			page,
+			size,
+			totalPages: 1,
+			first: true,
+			last: true,
+			totalElements: 0,
+			errorMessage
+		} satisfies { events: Event[]; errorMessage: string } & PaginationState;
+	}
 }
 
 // Singleton instance of the controller
@@ -90,10 +108,5 @@ const eventsController = new EventsPageController();
  * Delegates data fetching and transformation to the EventsPageController.
  */
 export const load: PageServerLoad = async ({ url }) => {
-	try {
-		return await eventsController.loadPageData(url);
-	} catch (err) {
-		// Re-throw errors handled by the controller
-		throw err;
-	}
+	return await eventsController.loadPageData(url);
 };
