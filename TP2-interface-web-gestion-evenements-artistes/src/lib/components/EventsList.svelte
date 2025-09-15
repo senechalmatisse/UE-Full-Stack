@@ -35,28 +35,28 @@
 {/if}
 
 <style>
-	/* Styling for empty events message */
-	.events-empty {
-		text-align: center;
-		font-size: 1.2rem;
-		color: #666;
-		margin: 3rem 0;
-	}
+/* Styling for empty events message */
+.events-empty {
+	text-align: center;
+	font-size: 1.2rem;
+	color: #666;
+	margin: 3rem 0;
+}
 
-	/* Grid styling for events list */
+/* Grid styling for events list */
+.events-list {
+	list-style: none;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 768px) {
 	.events-list {
-		list-style: none;
-		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-		gap: 1.5rem;
-		margin-bottom: 2rem;
+		grid-template-columns: 1fr;
 	}
-
-	/* Responsive layout for smaller screens */
-	@media (max-width: 768px) {
-		.events-list {
-			grid-template-columns: 1fr;
-		}
-	}
+}
 </style>

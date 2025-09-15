@@ -1,6 +1,4 @@
-/**
- * Generic parameters for pagination requests.
- */
+/** Generic parameters for pagination requests. */
 export interface PaginationParams {
 	/** The current page number (1-based). */
 	page: number;

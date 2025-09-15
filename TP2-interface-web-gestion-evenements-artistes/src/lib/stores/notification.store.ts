@@ -1,18 +1,39 @@
 import { writable } from 'svelte/store';
 
+/** Defines the possible types of notifications. */
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
+/** Interface representing a single notification. */
 export interface Notification {
+	/** Unique identifier for the notification */
 	id: number;
+	/** Type of the notification (success, error, info, warning) */
 	type: NotificationType;
+	/** Message to display */
 	message: string;
+	/** Optional duration in milliseconds before auto-removal */
 	timeout?: number;
 }
 
+/**
+ * Factory function to create a notification store.
+ *
+ * Provides reactive methods to add and remove notifications,
+ * including auto-removal after a timeout.
+ *
+ * @returns An object containing the `subscribe` method and helper methods for each notification type
+ */
 function createNotificationStore() {
 	const { subscribe, update } = writable<Notification[]>([]);
 	let counter = 0;
 
+	/**
+	 * Adds a new notification to the store.
+	 *
+	 * @param type - The type of notification
+	 * @param message - The message to display
+	 * @param timeout - Optional timeout in milliseconds before automatic removal (default 3000ms)
+	 */
 	function add(type: NotificationType, message: string, timeout = 3000) {
 		const id = ++counter;
 		const notif: Notification = { id, type, message, timeout };
@@ -24,18 +45,33 @@ function createNotificationStore() {
 		}
 	}
 
+	/**
+	 * Removes a notification by its ID.
+	 *
+	 * @param id - The unique identifier of the notification to remove
+	 */
 	function remove(id: number) {
 		update((list) => list.filter((n) => n.id !== id));
 	}
 
 	return {
 		subscribe,
+		/** Add a success notification */
 		success: (msg: string, t?: number) => add('success', msg, t),
+		/** Add an error notification */
 		error: (msg: string, t?: number) => add('error', msg, t),
+		/** Add an info notification */
 		info: (msg: string, t?: number) => add('info', msg, t),
+		/** Add a warning notification */
 		warning: (msg: string, t?: number) => add('warning', msg, t),
+		/** Remove a notification by ID */
 		remove
 	};
 }
 
+/**
+ * Reactive notification store instance.
+ *
+ * Can be imported and used across components to show notifications.
+ */
 export const notifications = createNotificationStore();

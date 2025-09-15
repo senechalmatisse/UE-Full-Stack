@@ -22,9 +22,7 @@
 	 */
 	export let isLoading = false;
 
-	/**
-	 * Reactive declaration of visible pages, computed using PaginationUtils.
-	 */
+	/** Reactive declaration of visible pages, computed using PaginationUtils. */
 	$: visiblePages = PaginationUtils.getVisiblePages(
 		paginationState.page, 
 		paginationState.totalPages

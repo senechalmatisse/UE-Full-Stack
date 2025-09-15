@@ -55,65 +55,65 @@
 {/if}
 
 <style>
-	/* Loading container styling */
-	.loading {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 3rem;
-		color: #666;
-	}
+/* Loading container styling */
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem;
+	color: #666;
+}
 
-	/* Spinner animation */
+/* Spinner animation */
+.loading-spinner {
+	width: 40px;
+	height: 40px;
+	border: 4px solid #f3f3f3;
+	border-top: 4px solid #007bff;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin-bottom: 1rem;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+/* Error message container styling */
+.error-message {
+	background: #f8d7da;
+	border: 1px solid #f5c6cb;
+	color: #721c24;
+	padding: 1rem;
+	border-radius: 4px;
+	margin-bottom: 1rem;
+	text-align: center;
+}
+
+/* Retry button styling */
+.retry-btn {
+	background: #dc3545;
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+	margin-top: 0.5rem;
+	transition: background-color 0.2s ease;
+}
+
+.retry-btn:hover, .retry-btn:focus {
+	background: #c82333;
+	outline: 2px solid #c82333;
+	outline-offset: 2px;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
 	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 4px solid #f3f3f3;
-		border-top: 4px solid #007bff;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 1rem;
+		animation: none;
 	}
-
-	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
-	}
-
-	/* Error message container styling */
-	.error-message {
-		background: #f8d7da;
-		border: 1px solid #f5c6cb;
-		color: #721c24;
-		padding: 1rem;
-		border-radius: 4px;
-		margin-bottom: 1rem;
-		text-align: center;
-	}
-
-	/* Retry button styling */
-	.retry-btn {
-		background: #dc3545;
-		color: white;
-		border: none;
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		cursor: pointer;
-		margin-top: 0.5rem;
-		transition: background-color 0.2s ease;
-	}
-
-	.retry-btn:hover, .retry-btn:focus {
-		background: #c82333;
-		outline: 2px solid #c82333;
-		outline-offset: 2px;
-	}
-
-	/* Respect reduced motion preference */
-	@media (prefers-reduced-motion: reduce) {
-		.loading-spinner {
-			animation: none;
-		}
-	}
+}
 </style>

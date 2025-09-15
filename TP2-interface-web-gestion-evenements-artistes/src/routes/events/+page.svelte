@@ -9,30 +9,22 @@
 	import { onMount, onDestroy } from 'svelte';
     import { notifications } from '../../lib/stores/notification.store';
 
-	/**
-	 * Props received from the server containing events and pagination state.
-	 */
+	/** Props received from the server containing events and pagination state. */
 	export let data: { events: Event[] } & PaginationState;
 
-	/**
-	 * Manages loading and error states during asynchronous operations.
-	 */
+	/** Manages loading and error states during asynchronous operations. */
 	const loadingManager = new LoadingStateManager();
 	let loadingState = loadingManager.getState();
 	let unsubscribe: (() => void) | null = null;
 
-	/**
-	 * Subscribe to loading state changes on mount.
-	 */
+	/** Subscribe to loading state changes on mount. */
 	onMount(() => {
 		unsubscribe = loadingManager.subscribe((state) => {
 			loadingState = state;
 		});
 	});
 
-	/**
-	 * Unsubscribe from loading state changes on destroy.
-	 */
+	/** Unsubscribe from loading state changes on destroy. */
 	onDestroy(() => {
 		unsubscribe?.();
 	});
@@ -71,9 +63,7 @@
 		handlePageChange(data.page);
 	}
 
-	/**
-	 * Reactive extraction of pagination state for child components.
-	 */
+	/** Reactive extraction of pagination state for child components. */
 	$: paginationState = {
 		page: data.page,
 		totalPages: data.totalPages,

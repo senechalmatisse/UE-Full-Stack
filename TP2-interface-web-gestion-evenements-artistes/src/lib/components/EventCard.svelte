@@ -8,9 +8,7 @@
 	 */
 	export let event: Event;
 
-	/**
-	 * Instance of DateFormatter used to format event start and end dates.
-	 */
+	/** Instance of DateFormatter used to format event start and end dates. */
 	export let dateFormatter: DateFormatter;
 
 	/**
@@ -21,9 +19,7 @@
 		? event.artists.slice(0, 2).map(a => a.label).join(', ')
 		: '';
 	
-	/**
-	 * Number of additional artists not shown in the main display.
-	 */
+	/** Number of additional artists not shown in the main display. */
 	$: additionalArtists = event.artists.length > 2 ? event.artists.length - 2 : 0;
 </script>
 
@@ -71,96 +67,96 @@
 </li>
 
 <style>
-	/* Card container styling */
-	.event-card {
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 1.5rem;
-		background: white;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		transition: transform 0.2s ease, box-shadow 0.2s ease;
-	}
+/* Card container styling */
+.event-card {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 1.5rem;
+	background: white;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-	.event-card:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-	}
+.event-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
 
-	.event-card:focus-within {
-		outline: 2px solid #007bff;
-		outline-offset: 2px;
-	}	
+.event-card:focus-within {
+	outline: 2px solid #007bff;
+	outline-offset: 2px;
+}	
 
-	/* Event title styling */
-	.event-title {
-		margin: 0 0 1rem 0;
-		color: #333;
-		font-size: 1.3rem;
-	}
+/* Event title styling */
+.event-title {
+	margin: 0 0 1rem 0;
+	color: #333;
+	font-size: 1.3rem;
+}
 
-	/* Event date styling */
-  .event-dates {
+/* Event date styling */
+.event-dates {
     font-size: 0.95rem;
     color: #7f8c8d;
     margin-bottom: 0.75rem;
-  }
+}
 
-	.event-start,
-	.event-end {
-		font-weight: 600;
-		color: #555;
-		white-space: nowrap;
-	}
+.event-start,
+.event-end {
+	font-weight: 600;
+	color: #555;
+	white-space: nowrap;
+}
 
-	/* Artists list styling */
-	.event-artists {
-		margin-bottom: 1rem;
-		color: #555;
-	}
+/* Artists list styling */
+.event-artists {
+	margin-bottom: 1rem;
+	color: #555;
+}
 
-	.artists-count {
-		font-weight: 500;
-		  margin-right: 0.25rem;
-	}
+.artists-count {
+	font-weight: 500;
+    margin-right: 0.25rem;
+}
 
-	.event-artists-list {
-		font-weight: 500;
+.event-artists-list {
+	font-weight: 500;
     color: #2980b9;
-	}
+}
 
-	.event-artists-more {
-		font-style: italic;
-		color: #777;
-	}
+.event-artists-more {
+	font-style: italic;
+	color: #777;
+}
 
-	.event-no-artists {
-	  font-size: 0.9rem;
-		color: #999;
-		font-style: italic;
-		margin-bottom: 1rem;
-	}
+.event-no-artists {
+    font-size: 0.9rem;
+	color: #999;
+	font-style: italic;
+	margin-bottom: 1rem;
+}
 
-	/* Event link styling */
-	.event-link {
-		display: inline-block;
-		background: #007bff;
-		color: white;
-		text-decoration: none;
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		transition: background-color 0.2s ease;
-	}
+/* Event link styling */
+.event-link {
+	display: inline-block;
+	background: #007bff;
+	color: white;
+	text-decoration: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	transition: background-color 0.2s ease;
+}
 
-	.event-link:hover, .event-link:focus {
-		background: #0056b3;
-		outline: 2px solid #0056b3;
-		outline-offset: 2px;
-	}
+.event-link:hover, .event-link:focus {
+	background: #0056b3;
+	outline: 2px solid #0056b3;
+	outline-offset: 2px;
+}
 
-	/* Reduce motion for accessibility */
-	@media (prefers-reduced-motion: reduce) {
-		.event-card {
-			transition: none;
-		}
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+	.event-card {
+		transition: none;
 	}
+}
 </style>
