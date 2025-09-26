@@ -91,7 +91,7 @@
             <div class="card-section">
                 <h3 class="card-section-title">Artistes associés</h3>
                 <ul id="linked-informations">
-                    {#each artistsDisplay as artist (event.id)}
+                    {#each artistsDisplay as artist (artist.id)}
                         <li class="artist-item">
                             <a
 								href={`/artists/${artist.id}`}

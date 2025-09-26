@@ -74,9 +74,9 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 
 			await goto(url);
 		} catch (err) {
-			notifications.error(`An error occurred while navigating to ${entity}.`);
+			notifications.error(`Une erreur est survenue lors de la navigation vers ${entity}.`);
 			loadingManager.setError(
-				err instanceof Error ? err.message : 'Unknown error'
+				err instanceof Error ? err.message : 'Erreur inconnue'
 			);
 		} finally {
 			loadingManager.stopLoading();

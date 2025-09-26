@@ -62,6 +62,7 @@
 			handlePageClick(pageNum);
 		}
 	}
+
 </script>
 
 <!-- 

@@ -1,26 +1,26 @@
 <script lang="ts">
-	import type { Event, PaginationState } from '../../lib/types/pagination';
-	import EventsList from '../../lib/components/EventsList.svelte';
-	import Pagination from '../../lib/components/Pagination.svelte';
-	import LoadingState from '../../lib/components/LoadingState.svelte';
 	import { onMount, onDestroy } from 'svelte';
-	import { usePaginationNavigation } from '../../lib/hooks/usePaginationNavigation';
+	import type { Event, PaginationState } from '$lib/types/pagination';
+	import EventsList from '$lib/components/EventsList.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
+	import LoadingState from '$lib/components/LoadingState.svelte';
+	import { usePaginationNavigation } from '$lib/hooks/usePaginationNavigation';
 
 	/** Props received from the server containing events and pagination state. */
 	export let data: { events: Event[] } & PaginationState;
 
 	/** Manages loading and error states during asynchronous operations. */
 	/** Centralized loading state manager instance */
-	const {
-		loadingManager,
-		subscribeToLoading,
-		navigateToPage,
-		resetLoadingState
-	} = usePaginationNavigation({
-		entity: 'artists',
-		withSearch: true,
-		defaultSize: 10
-	});
+    const {
+        loadingManager,
+        subscribeToLoading,
+        navigateToPage,
+        resetLoadingState
+    } = usePaginationNavigation({
+        entity: 'events',
+        withSearch: true,
+        defaultSize: 10
+    });
 
     /** Current loading state of the page (loading, error, etc.). */
     let currentLoadingState = loadingManager.getState();
