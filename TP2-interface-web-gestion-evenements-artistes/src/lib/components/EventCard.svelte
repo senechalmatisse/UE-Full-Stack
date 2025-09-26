@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { ArrowRight } from 'lucide-svelte';
 	import type { Event } from '../types/pagination';
-	import type { DateFormatter } from '../utils/formatters';
+	import { DateFormatterFactory } from '../utils/formatters';
 
 	/**
 	 * Event data to display in the card.
@@ -8,155 +9,159 @@
 	 */
 	export let event: Event;
 
-	/** Instance of DateFormatter used to format event start and end dates. */
-	export let dateFormatter: DateFormatter;
+	/**
+	 * Delay (in milliseconds) applied to the CSS animation
+	 * for staggered list appearance.
+	 */
+	export let animationDelay = 0;
 
 	/**
-	 * Display string for up to two artist names.
-	 * If there are no artists, this will be an empty string.
+	 * Date formatter instance used to format event dates.
+	 * Defaults to a French locale formatter.
 	 */
-	$: artistsDisplay = event.artists.length > 0 
-		? event.artists.slice(0, 2).map(a => a.label).join(', ')
-		: '';
-	
-	/** Number of additional artists not shown in the main display. */
+	const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+
+	/**
+	 * Slice of up to two artist objects to display directly in the card.
+	 * If there are no artists, this will be an empty array.
+	 */
+    $: artistsDisplay = event.artists.slice(0, 2);
+
+	/**
+	 * Number of additional artists not displayed directly in the card.
+	 * Used to show a summary indicator (e.g. "+2 more").
+	 */
 	$: additionalArtists = event.artists.length > 2 ? event.artists.length - 2 : 0;
+
+	/**
+	 * Formats the start and end dates of the event.
+	 * - If start and end are the same date, returns the single date.
+	 * - If different, returns a formatted date range.
+	 * - Falls back to a default error message if formatting fails.
+	 *
+	 * @param event - The event object containing start and end dates
+	 * @returns A formatted date string or a fallback message
+	 */
+	function formatEventDates(event: Event): string {
+		try {
+			const start = dateFormatter.format(event.startDate);
+			const end = dateFormatter.format(event.endDate);
+			return start === end ? start : `${start} – ${end}`;
+		} catch {
+			return 'Dates non disponibles';
+		}
+	}
 </script>
 
-<li id={`event-${event.id}`} class="event-card">
-	<!-- Event title -->
-	<h2 class="event-title">{event.label}</h2>
-	
-	<!-- Event date range -->
-	<p class="event-dates">
-		Du <time class="event-start" datetime={event.startDate}>
-			{dateFormatter.format(event.startDate)}
-		</time> 
-		au <time class="event-end" datetime={event.endDate}>
-			{dateFormatter.format(event.endDate)}
+<!-- 
+	Single event card.
+	Displays the event title, date(s), associated artists, 
+	and a link to the event detail page. 
+-->
+<li
+    id={`event-${event.id}`}
+    class="card"
+	style="animation-delay: {animationDelay}ms"
+	aria-labelledby="event-name-{event.id}"
+>
+	<header class="card-header">
+		<h2 id="event-title-{event.id}" class="card-title">
+			{event.label}
+		</h2>
+
+		<!-- Badge showing the number of associated artists -->
+		{#if event.artists.length > 0}
+			<div
+                class="badge"
+                title="{event.artists.length} artiste{event.artists.length > 1 ? 's' : ''}"
+            >
+				{event.artists.length}
+			</div>
+		{/if}
+
+		<!-- Event date(s) -->
+        <time class="event-dates" datetime="{event.startDate}">
+			{formatEventDates(event)}
 		</time>
-	</p>
-	
-	<!-- Artists list -->
-	{#if event.artists.length > 0}
-		<p class="event-artists">
-			<span class="artists-count">
-				{event.artists.length} Artiste{event.artists.length > 1 ? 's ' : ' '}:
-			</span>
-			<span class="event-artists-list">
-				{artistsDisplay}
-			</span>
-			{#if additionalArtists > 0}
-				<span class="event-artists-more">
-					... (+{additionalArtists} en plus)
-				</span>
-			{/if}
-		</p>
-	{:else}
-		<p class="event-no-artists">Aucun artiste</p>
-	{/if}
-	
-	<!-- Link to event details page -->
-	<a 
-		href={`/events/${event.id}`} 
-		class="event-link"
-		aria-label="Détails sur l'évènement {event.label}"
-	>
-		Voir informations&nbsp;&nbsp;<span aria-hidden="true">▼</span>
-	</a>
+	</header>
+
+	<div class="card-content">
+		<!-- Artists section -->
+        {#if event.artists.length > 0}
+            <div class="card-section">
+                <h3 class="card-section-title">Artistes associés</h3>
+                <ul id="linked-informations">
+                    {#each artistsDisplay as artist (event.id)}
+                        <li class="artist-item">
+                            <a
+								href={`/artists/${artist.id}`}
+								class="artist-details"
+								aria-label="Voir la fiche de l'artiste {artist.label}"
+							>
+                                <span class="related-item-label">{artist.label}</span>
+                            </a>
+                        </li>
+                    {/each}
+					<!-- Summary for additional artists -->
+                    {#if additionalArtists > 0}
+                        <li class="additional-information">
+                            <span class="additional-count">
+                                +{additionalArtists} autre{additionalArtists > 1 ? 's' : ''}
+                                artiste{additionalArtists > 1 ? 's' : ''}
+                            </span>
+                        </li>
+                    {/if}
+                </ul>
+            </div>
+        {:else}
+			<!-- Empty state when no artists are linked -->
+            <div class="no-information">
+                <p>Aucun artiste associé pour le moment.</p>
+            </div>
+        {/if}
+    </div>
+
+	<footer class="card-footer">
+		<!-- Link to event details page -->
+		<a
+			href="/events/{event.id}"
+			class="card-link"
+			aria-label="Voir les détails de {event.label}"
+		>
+			<span>Voir détails</span>
+			<ArrowRight size={16} />
+        </a>
+	</footer>
 </li>
 
 <style>
-/* Card container styling */
-.event-card {
-	border: 1px solid #ddd;
-	border-radius: 8px;
-	padding: 1.5rem;
-	background: white;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+    @import '../styles/card.css';
 
-.event-card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
+	/* Artist list item */
+    .artist-item {
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: background-color 0.2s;
+    }
 
-.event-card:focus-within {
-	outline: 2px solid #007bff;
-	outline-offset: 2px;
-}	
+    .artist-item:hover {
+        background: #f1f5f9;
+    }
 
-/* Event title styling */
-.event-title {
-	margin: 0 0 1rem 0;
-	color: #333;
-	font-size: 1.3rem;
-}
+    .artist-details {
+        text-decoration: none;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
 
-/* Event date styling */
-.event-dates {
-    font-size: 0.95rem;
-    color: #7f8c8d;
-    margin-bottom: 0.75rem;
-}
-
-.event-start,
-.event-end {
-	font-weight: 600;
-	color: #555;
-	white-space: nowrap;
-}
-
-/* Artists list styling */
-.event-artists {
-	margin-bottom: 1rem;
-	color: #555;
-}
-
-.artists-count {
-	font-weight: 500;
-    margin-right: 0.25rem;
-}
-
-.event-artists-list {
-	font-weight: 500;
-    color: #2980b9;
-}
-
-.event-artists-more {
-	font-style: italic;
-	color: #777;
-}
-
-.event-no-artists {
-    font-size: 0.9rem;
-	color: #999;
-	font-style: italic;
-	margin-bottom: 1rem;
-}
-
-/* Event link styling */
-.event-link {
-	display: inline-block;
-	background: #007bff;
-	color: white;
-	text-decoration: none;
-	padding: 0.5rem 1rem;
-	border-radius: 4px;
-	transition: background-color 0.2s ease;
-}
-
-.event-link:hover, .event-link:focus {
-	background: #0056b3;
-	outline: 2px solid #0056b3;
-	outline-offset: 2px;
-}
-
-/* Reduce motion for accessibility */
-@media (prefers-reduced-motion: reduce) {
-	.event-card {
-		transition: none;
+	/* Responsive adjustments */
+	@media (max-width: 768px) {
+		.artist-details {
+			gap: 0.125rem;
+		}
 	}
-}
 </style>

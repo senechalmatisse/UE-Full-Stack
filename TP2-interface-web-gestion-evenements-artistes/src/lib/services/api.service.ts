@@ -3,9 +3,11 @@ import type {
 	ApiConfig, 
 	DataService, 
 	PaginatedResponse, 
-	PaginationParams 
+	PaginationParams
 } from '../types/pagination';
 import { DataValidator } from '../utils/validation';
+import { APP_CONFIG } from '../config/app.config';
+import { AppError } from './api.error';
 
 /**
  * Generic API service implementing the Repository pattern.
@@ -18,6 +20,7 @@ import { DataValidator } from '../utils/validation';
  */
 export class ApiService<T> implements DataService<T> {
 	private config: ApiConfig;
+	private controllers: Map<string, AbortController> = new Map();
 
 	/**
 	 * Creates a new ApiService instance.
@@ -26,11 +29,7 @@ export class ApiService<T> implements DataService<T> {
 	 */
 	constructor(config: ApiConfig) {
 		this.config = {
-			timeout: 5000,
-			defaultHeaders: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json'
-			},
+			...APP_CONFIG.api,
 			...config
 		};
 	}
@@ -46,14 +45,13 @@ export class ApiService<T> implements DataService<T> {
 	 */
 	async fetchPaginated(endpoint: string, params: PaginationParams): Promise<PaginatedResponse<T>> {
 		const url = this.buildUrl(endpoint, params);
-		
+
 		try {
-			const response = await this.makeRequest(url);
+			const response = await this.makeRequest(url, endpoint);
 			const data = await response.json();
-			
+
 			this.validateResponse(data);
 			return data as PaginatedResponse<T>;
-			
 		} catch (err) {
 			this.handleError(err);
 		}
@@ -69,14 +67,17 @@ export class ApiService<T> implements DataService<T> {
 	private buildUrl(endpoint: string, params: PaginationParams): string {
 		const baseUrl = this.config.baseUrl.replace(/\/$/, '');
 		const cleanEndpoint = endpoint.replace(/^\//, '');
-		
-		const searchParams = new URLSearchParams({
-			page: params.page.toString(),
-			size: params.size.toString()
-		});
+        const url = new URL(`${baseUrl}/${cleanEndpoint}`);
 
-		return `${baseUrl}/${cleanEndpoint}?${searchParams}`;
-	}
+        url.searchParams.set('page', String(params.page));
+        url.searchParams.set('size', String(params.size));
+
+        if (params.search) {
+            url.searchParams.set('search', params.search);
+        }
+
+        return url.toString();
+    }
 
 	/**
 	 * Executes the HTTP request with timeout handling.
@@ -86,8 +87,12 @@ export class ApiService<T> implements DataService<T> {
 	 *
 	 * @throws {Error} If the request fails or times out.
 	 */
-	private async makeRequest(url: string): Promise<Response> {
-		const controller = new AbortController();
+	private async makeRequest(url: string, endpoint: string): Promise<Response> {
+		this.cancelRequest(endpoint);
+
+        const controller = new AbortController();
+		this.controllers.set(endpoint, controller);
+
 		const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
 		try {
@@ -97,15 +102,26 @@ export class ApiService<T> implements DataService<T> {
 			});
 
 			clearTimeout(timeoutId);
+			this.controllers.delete(endpoint);
 
 			if (!response.ok) {
-                throw error(response.status, response.statusText || 'Erreur serveur');
+				throw new AppError(response.status, response.statusText || APP_CONFIG.messages.error.server);
 			}
 
 			return response;
 		} catch (err) {
 			clearTimeout(timeoutId);
+			this.controllers.delete(endpoint);
 			throw err;
+		}
+	}
+
+    	/** Cancel request by endpoint */
+	private cancelRequest(endpoint: string): void {
+		const controller = this.controllers.get(endpoint);
+		if (controller) {
+			controller.abort();
+			this.controllers.delete(endpoint);
 		}
 	}
 
@@ -117,8 +133,16 @@ export class ApiService<T> implements DataService<T> {
 	 */
 	private validateResponse(data: any): void {
 		if (!DataValidator.validatePaginatedResponse(data)) {
-			throw new Error('Invalid API response structure');
+			throw new AppError(500, 'Invalid API response structure');
 		}
+	}
+
+	protected withJsonBody(payload: any, method: 'POST' | 'PUT'): RequestInit {
+		return {
+			method,
+			body: JSON.stringify(payload),
+			headers: { ...this.config.defaultHeaders }
+		};
 	}
 
 	/**
@@ -128,29 +152,18 @@ export class ApiService<T> implements DataService<T> {
 	 * @throws {import('@sveltejs/kit').HttpError} - Throws a mapped HTTP error.
 	 */
 	private handleError(err: any): never {
-		if (err && typeof err === 'object' && 'status' in err) {
-			throw err;
+		if (err instanceof AppError) {
+			throw error(err.code, err.message);
 		}
 
-		if (err instanceof Error) {
-			const message = err.message;
-			
-			if (message.includes('HTTP 404')) {
-				throw error(404, 'Resource not found');
-			} else if (message.includes('HTTP 400')) {
-				throw error(400, 'Invalid parameters');
-			} else if (message.includes('HTTP 5')) {
-				throw error(503, 'Service temporarily unavailable');
-			} else if (message.includes('aborted')) {
-				throw error(408, 'Request timeout');
-			}
+		if (err instanceof DOMException && err.name === 'AbortError') {
+			throw error(408, APP_CONFIG.messages.error.timeout);
 		}
 
-		console.error('API Error:', err);
-		throw error(503, 'Communication error with the server');
+		throw error(503, APP_CONFIG.messages.error.generic);
 	}
 
-    async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+	public async request<R>(endpoint: string, options: RequestInit = {}, validator?: (data: any) => data is R): Promise<R | null> {
         const baseUrl = this.config.baseUrl.replace(/\/$/, '');
         const cleanEndpoint = endpoint.replace(/^\//, '');
         const url = `${baseUrl}/${cleanEndpoint}`;
@@ -168,20 +181,24 @@ export class ApiService<T> implements DataService<T> {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+				throw new AppError(response.status, response.statusText);
             }
 
     		// Pas de contenu (DELETE 204 par ex.)
             if (response.status === 204) {
-                return null as T;
-            }
+				return null;
+			}
 
-            const text = await response.text();
-            if (!text) {
-                return null as T;
-            }
+			const text = await response.text();
+			if (!text) return null;
 
-            return JSON.parse(text) as T;
+			const json = JSON.parse(text);
+
+			if (validator && !validator(json)) {
+				throw new AppError(500, 'Invalid response structure');
+			}
+
+			return json as R;
         } catch (err) {
             clearTimeout(timeoutId);
             this.handleError(err);
@@ -206,7 +223,7 @@ export class ApiServiceFactory {
 	 * @param config - API configuration.
 	 * @returns An ApiService instance for the given type and config.
 	 */
-	static create<T>(key: string, config: ApiConfig): ApiService<T> {
+	static create<T>(key: string, config: ApiConfig = APP_CONFIG.api): ApiService<T> {
 		if (!this.instances.has(key)) {
 			this.instances.set(key, new ApiService<T>(config));
 		}

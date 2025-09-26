@@ -3,6 +3,12 @@ import { writable } from 'svelte/store';
 /** Defines the possible types of notifications. */
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
+/** Action optionnelle pour une notification (ex: bouton "Réessayer") */
+export interface NotificationAction {
+	label: string;
+	callback: () => void;
+}
+
 /** Interface representing a single notification. */
 export interface Notification {
 	/** Unique identifier for the notification */
@@ -13,6 +19,8 @@ export interface Notification {
 	message: string;
 	/** Optional duration in milliseconds before auto-removal */
 	timeout?: number;
+	/** Actions supplémentaires (boutons optionnels) */
+	actions?: NotificationAction[];
 }
 
 /**
@@ -25,7 +33,6 @@ export interface Notification {
  */
 function createNotificationStore() {
 	const { subscribe, update } = writable<Notification[]>([]);
-	let counter = 0;
 
 	/**
 	 * Adds a new notification to the store.
@@ -34,9 +41,14 @@ function createNotificationStore() {
 	 * @param message - The message to display
 	 * @param timeout - Optional timeout in milliseconds before automatic removal (default 3000ms)
 	 */
-	function add(type: NotificationType, message: string, timeout = 3000) {
-		const id = ++counter;
-		const notif: Notification = { id, type, message, timeout };
+	function add(
+		type: NotificationType,
+		message: string,
+		timeout = 3000,
+		actions?: NotificationAction[]
+	) {
+		const id = Date.now() + Math.floor(Math.random() * 1000);
+		const notif: Notification = { id, type, message, timeout, actions };
 
 		update((list) => [...list, notif]);
 
@@ -57,13 +69,13 @@ function createNotificationStore() {
 	return {
 		subscribe,
 		/** Add a success notification */
-		success: (msg: string, t?: number) => add('success', msg, t),
+		success: (msg: string, t?: number, a?: NotificationAction[]) => add('success', msg, t, a),
 		/** Add an error notification */
-		error: (msg: string, t?: number) => add('error', msg, t),
+		error: (msg: string, t?: number, a?: NotificationAction[]) => add('error', msg, t, a),
 		/** Add an info notification */
-		info: (msg: string, t?: number) => add('info', msg, t),
+		info: (msg: string, t?: number, a?: NotificationAction[]) => add('info', msg, t, a),
 		/** Add a warning notification */
-		warning: (msg: string, t?: number) => add('warning', msg, t),
+		warning: (msg: string, t?: number, a?: NotificationAction[]) => add('warning', msg, t, a),
 		/** Remove a notification by ID */
 		remove
 	};

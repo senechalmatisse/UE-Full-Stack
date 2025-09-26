@@ -4,6 +4,7 @@ export interface PaginationParams {
 	page: number;
 	/** The number of items per page. */
 	size: number;
+	search?: string;
 }
 
 /**

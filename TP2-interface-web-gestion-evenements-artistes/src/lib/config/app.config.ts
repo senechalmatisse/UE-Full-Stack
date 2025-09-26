@@ -5,6 +5,34 @@
  * API, pagination, date, accessibility, and message settings
  * in one place.
  */
+
+/**
+ * Externalized error messages (Open/Closed).
+ */
+export const errorMessages = {
+    /** Network connectivity error. */
+	network: 'Erreur de réseau. Veuillez vérifier votre connexion.',
+    /** Timeout error. */
+	timeout: 'Délai de connexion dépassé. Veuillez réessayer.',
+    /** Server-side error. */
+	server: 'Erreur serveur. Veuillez réessayer plus tard.',
+    /** Resource not found error. */
+	notFound: 'Ressource introuvable.',
+    /** Fallback generic error. */
+	generic: 'Une erreur inattendue s’est produite.'
+} as const;
+
+/**
+ * Centralized error colors (Dependency Inversion).
+ */
+export const errorColors: Record<number, string> = {
+	404: 'darkorange',
+	500: 'crimson',
+	401: 'royalblue',
+	403: 'darkred',
+	503: 'darkviolet'
+};
+
 export const APP_CONFIG = {
 	/**
 	 * API configuration.
@@ -52,7 +80,7 @@ export const APP_CONFIG = {
 			year: 'numeric' as const,
 			month: 'long' as const,
 			day: 'numeric' as const
-		}
+		} satisfies Intl.DateTimeFormatOptions
 	},
 
 	/**
@@ -75,21 +103,18 @@ export const APP_CONFIG = {
 	 */
 	messages: {
 		/** Message displayed while loading events. */
-		loading: 'Chargement des événements...',
+		loading: 'Chargement...',
 		/** Message displayed when no events are found. */
-		empty: 'Aucun événement trouvé.',
+		empty: 'Aucun ressource trouvée.',
 		/** Error messages mapped to different failure cases. */
 		error: {
-			/** Network connectivity error. */
-			network: 'Erreur de réseau. Veuillez vérifier votre connexion.',
-			/** Timeout error. */
-			timeout: 'Délai de connexion dépassé. Veuillez réessayer.',
-			/** Server-side error. */
-			server: 'Erreur serveur. Veuillez réessayer plus tard.',
-			/** Resource not found error. */
-			notFound: 'Ressource introuvable.',
-			/** Fallback generic error. */
-			generic: 'Une erreur inattendue s\'est produite.'
+			map: {
+				404: 'notFound',
+				500: 'server',
+				408: 'timeout',
+				503: 'network'
+			} as Record<number, keyof typeof errorMessages>,
+			...errorMessages
 		}
 	}
 } as const;

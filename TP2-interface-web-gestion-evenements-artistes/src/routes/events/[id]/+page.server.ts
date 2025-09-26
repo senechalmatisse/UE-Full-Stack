@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { createEventService } from '../../../lib/services/event.service';
+import { createEventService } from '$lib/services/event.service';
+import { APP_CONFIG } from '$lib/config/app.config';
+import { AppError } from '$lib/services/api.error';
+import type { Event } from '$lib/types/pagination';
 
 /** Singleton instance of EventService used for fetching event data. */
 const eventService = createEventService();
@@ -20,14 +23,17 @@ export const load: PageServerLoad = async ({ params }) => {
     const { id } = params;
 
     try {
-        const event = await eventService.getEventById(id);
+        const event = await eventService.getById('/events', id);
 
         if (!event) {
             throw error(404, 'Événement introuvable');
         }
 
         return { event };
-    } catch (err) {
-        throw error(500, 'Impossible de charger les détails de l’événement');
-    }
+	} catch (err) {
+		if (err instanceof AppError && err.code === 404) {
+			throw error(404, 'Événement introuvable');
+		}
+		throw error(503, 'Le service est momentanément indisponible');
+	}
 };

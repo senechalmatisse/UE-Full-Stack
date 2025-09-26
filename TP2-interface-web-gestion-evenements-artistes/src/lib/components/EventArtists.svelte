@@ -3,20 +3,23 @@
 	import { createEventService } from '../services/event.service';
 	import { createArtistService } from '../services/artist.service';
 	import { notifications } from '../stores/notification.store';
+	import { AppError } from '../services/api.error';
 
 	/**
 	 * Event object passed as a prop.
 	 * Contains event details and associated artists.
 	 */
-	export let event: Event;
+	export let event: Event
 
 	/** Instance of EventService to handle event-related API calls */
 	const eventService = createEventService();
-	/** Instance of ArtistService to handle artist-related API calls */
+
+    /** Instance of ArtistService to handle artist-related API calls */
 	const artistService = createArtistService();
 
 	/** Stores the ID of the new artist to add */
 	let newArtistId = '';
+
 	/** Indicates if a request is currently in progress */
 	let isLoading = false;
 
@@ -34,7 +37,7 @@
 		if (!id) return;
 
 		await performAction(async () => {
-			const artist = await artistService.getArtistById(id);
+			const artist = await artistService.getById('/artists', id);
 			if (!artist) {
 				notifications.error("L'artiste n'existe pas");
 				return;
@@ -81,7 +84,11 @@
 		try {
 			await action();
 		} catch (e) {
-			notifications.error(errorMsg);
+			if (e instanceof AppError) {
+				notifications.error(e.message);
+			} else {
+				notifications.error(errorMsg);
+			}
 		} finally {
 			isLoading = false;
 		}
@@ -141,122 +148,122 @@
 </section>
 
 <style>
-/* === Container === */
-#event-artists-section {
-	background-color: #fdfdfd;
-	border: 1px solid #e0e0e0;
-	border-radius: 12px;
-	padding: 2rem;
-	max-width: 600px;
-	margin: 2rem auto;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-	transition: box-shadow 0.3s ease, opacity 0.3s ease;
-}
+    /* === Container === */
+    #event-artists-section {
+        background-color: #fdfdfd;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        margin: 2rem auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease, opacity 0.3s ease;
+    }
 
-/* === Heading === */
-.event-artists-title {
-	font-size: 1.5rem;
-	font-weight: 600;
-	margin-bottom: 1.5rem;
-	color: #2c3e50;
-	text-align: center;
-}
+    /* === Heading === */
+    .event-artists-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #2c3e50;
+        text-align: center;
+    }
 
-/* === Artist List === */
-#artist-list {
-	list-style: none;
-	padding: 0;
-	margin-bottom: 1.5rem;
-}
+    /* === Artist List === */
+    #artist-list {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 1.5rem;
+    }
 
-.artist-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	background-color: #f8f9fa;
-	border: 1px solid #ddd;
-	border-radius: 6px;
-	padding: 0.75rem 1rem;
-	margin-bottom: 0.5rem;
-	transition: background-color 0.3s ease;
-}
+    .artist-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        transition: background-color 0.3s ease;
+    }
 
-.artist-item:hover {
-	background-color: #eef2f5;
-}
+    .artist-item:hover {
+        background-color: #eef2f5;
+    }
 
-.artist-label {
-	font-weight: 500;
-	color: #2c3e50;
-}
+    .artist-label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
 
-/* === Empty State === */
-.artist-empty {
-	font-size: 0.95rem;
-	color: #7f8c8d;
-	text-align: center;
-	margin-bottom: 1.5rem;
-}
+    /* === Empty State === */
+    .artist-empty {
+        font-size: 0.95rem;
+        color: #7f8c8d;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
 
-/* === Form === */
-#artist-form {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	transition: opacity 0.3s ease;
-}
+    /* === Form === */
+    #artist-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: opacity 0.3s ease;
+    }
 
-.artist-form-label {
-	font-weight: 500;
-	color: #34495e;
-}
+    .artist-form-label {
+        font-weight: 500;
+        color: #34495e;
+    }
 
-.artist-form-input {
-	padding: 0.6rem 0.75rem;
-	border: 1px solid #ccc;
-	border-radius: 6px;
-	font-size: 1rem;
-	box-sizing: border-box;
-	transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
+    .artist-form-input {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
 
-.artist-form-input:focus {
-	border-color: #3498db;
-	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-	outline: none;
-}
+    .artist-form-input:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        outline: none;
+    }
 
-/* === Buttons === */
-.artist-remove-btn,
-.artist-form-submit {
-	background-color: #3498db;
-	color: white;
-	border: none;
-	border-radius: 6px;
-	font-size: 1rem;
-	font-weight: 500;
-	cursor: pointer;
-	transition: background-color 0.3s ease, transform 0.2s ease;
-}
+    /* === Buttons === */
+    .artist-remove-btn,
+    .artist-form-submit {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
 
-.artist-remove-btn {
-	padding: 0.6rem 1rem;
-	margin-left: 1rem;
-}
+    .artist-remove-btn {
+        padding: 0.6rem 1rem;
+        margin-left: 1rem;
+    }
 
-.artist-form-submit {
-	padding: 0.75rem 1.25rem;
-	align-self: flex-start;
-}
+    .artist-form-submit {
+        padding: 0.75rem 1.25rem;
+        align-self: flex-start;
+    }
 
-.artist-remove-btn:hover:not(:disabled),
-.artist-form-submit:hover:not(:disabled) {
-	background-color: #2980b9;
-}
+    .artist-remove-btn:hover:not(:disabled),
+    .artist-form-submit:hover:not(:disabled) {
+        background-color: #2980b9;
+    }
 
-.artist-remove-btn:disabled,
-.artist-form-submit:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
+    .artist-remove-btn:disabled,
+    .artist-form-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 </style>

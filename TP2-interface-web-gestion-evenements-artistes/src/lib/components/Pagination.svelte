@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import type { PaginationState } from '../types/pagination';
 	import { PaginationUtils } from '../utils/formatters';
 
@@ -28,10 +29,7 @@
 		paginationState.totalPages
 	);
 
-	/**
-	 * Reactive declaration of pagination info string,
-	 * e.g., "Page 2 of 5".
-	 */
+	/** Reactive declaration of pagination info string, */
 	$: paginationInfo = PaginationUtils.getPaginationInfo(
 		paginationState.page, 
 		paginationState.totalPages
@@ -70,24 +68,23 @@
 	Pagination navigation.
 	Provides accessible controls for navigating between pages of events.
 -->
-<nav 
-	class="pagination" 
-	aria-label="Event pages navigation"
->
-	<!-- Previous button -->
-	<button
-		class="pagination-btn prev"
-		on:click={() => handlePageClick(paginationState.page - 1)}
-		disabled={paginationState.first || isLoading}
-		aria-label="Retour vers la page précédente"
-	>
-		<span aria-hidden="true">◀</span>&nbsp;&nbsp;Précédent
-	</button>
+{#if paginationState.totalPages > 1}
 
-	<!-- Visible pages -->
-	{#if paginationState.totalPages > 1}
+    <nav 
+        class="pagination" 
+        aria-label="Event pages navigation"
+    >
+        <button
+            class="pagination-btn prev"
+            on:click={() => handlePageClick(paginationState.page - 1)}
+            disabled={paginationState.first || isLoading}
+            aria-label="Retour vers la page précédente"
+        >
+            <ArrowLeft size={16}/>
+            &nbsp;&nbsp;Précédent
+        </button>
+
 		<div class="pagination-pages" role="group" aria-label="Available pages">
-			<!-- First page button if not visible -->
 			{#if visiblePages[0] > 1}
 				<button
 					class="pagination-btn page"
@@ -103,7 +100,6 @@
 				{/if}
 			{/if}
 
-			<!-- Loop through visible pages -->
 			{#each visiblePages as pageNum}
 				<button
 					class={`pagination-btn page ${pageNum === paginationState.page ? 'active' : ''}`}
@@ -117,7 +113,6 @@
 				</button>
 			{/each}
 
-			<!-- Last page button if not visible -->
 			{#if visiblePages[visiblePages.length - 1] < paginationState.totalPages}
 				{#if visiblePages[visiblePages.length - 1] < paginationState.totalPages - 1}
 					<span class="pagination-ellipsis" aria-hidden="true">…</span>
@@ -133,23 +128,22 @@
 				</button>
 			{/if}
 		</div>
-	{/if}
 
-	<!-- Next button -->
-	<button
-		class="pagination-btn next"
-		on:click={() => handlePageClick(paginationState.page + 1)}
-		disabled={paginationState.last || isLoading}
-		aria-label="Aller vers la page suivante"
-	>
-		Suivant&nbsp;&nbsp;<span aria-hidden="true">▶</span>
-	</button>
+        <button
+            class="pagination-btn next"
+            on:click={() => handlePageClick(paginationState.page + 1)}
+            disabled={paginationState.last || isLoading}
+            aria-label="Aller vers la page suivante"
+        >
+            Suivant&nbsp;&nbsp;
+            <ArrowRight size={16}/>
+        </button>
 </nav>
 
-<!-- Pagination info (screen reader friendly, updates politely) -->
-<div class="pagination-info" aria-live="polite">
-	{paginationInfo}
-</div>
+    <div class="pagination-info" aria-live="polite">
+        {paginationInfo}
+    </div>
+{/if}
 
 <style>
 /* Pagination container */

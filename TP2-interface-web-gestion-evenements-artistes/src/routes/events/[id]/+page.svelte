@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Event } from '../../../lib/types/pagination';
-	import EventDetail from '../../../lib/components/EventDetail.svelte';
-	import EventArtists from '../../../lib/components/EventArtists.svelte';
+	import type { Event } from '$lib/types/pagination';
+	import EventDetail from '$lib/components/EventDetail.svelte';
+	import EventArtists from '$lib/components/EventArtists.svelte';
 
 	/** Props received from the server containing the event details. */
 	export let data: { event: Event };
@@ -15,20 +15,20 @@
 
 <svelte:head>
 	<title>Détails - {event.label}</title>
-	<meta name="description" content="Detailed information and associated artists for event {event.label}" />
+	<meta
+		name="description"
+		content={`Informations et artistes associés pour ${event.label ?? 'cet événement'}`}
+	/>
 </svelte:head>
 
 <section id="event-detail">
-    <header>
-        <h1>{event.label}</h1>
-    </header>
+	<header>
+		<h1 id="event-title">{event.label}</h1>
+	</header>
 
     <div class="event-detail-layout">
-        <!-- Event detail form/component; emits 'updated' event when changes occur -->
-        <EventDetail event={event} on:updated={(e) => event = e.detail} />
-
-        <!-- Associated artists management component -->
-        <EventArtists event={data.event} />
+		<EventDetail event={event} on:updated={(e) => (event = e.detail)} />
+		<EventArtists {event} />
     </div>
 </section>
 
@@ -53,8 +53,9 @@
     gap: 0;
 }
 
-.event-detail-layout section {
-  margin: 0;
-  padding: 0;
+@media (max-width: 768px) {
+	.event-detail-layout {
+		grid-template-columns: 1fr;
+	}
 }
 </style>

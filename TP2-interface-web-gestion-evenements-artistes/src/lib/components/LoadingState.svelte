@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount, tick } from 'svelte';
+
 	/**
 	 * Loading state flag.
 	 * When true, the loading indicator is displayed.
@@ -22,98 +24,107 @@
 	 * When provided, a "Retry" button will be rendered to allow the user to re-trigger the action.
 	 */
 	export let onRetry: (() => void) | null = null;
+
+	/** Référence du bouton Retry pour autofocus */
+	let retryButton: HTMLButtonElement | null = null;
+
+	// Autofocus quand une erreur survient et onRetry est défini
+	$: if (error && onRetry) {
+		tick().then(() => retryButton?.focus());
+	}
 </script>
 
 {#if error}
-	<!-- 
-		Error message container. 
-		Uses role="alert" and aria-live="polite" for screen readers.
-	-->
 	<div class="error-message" role="alert" aria-live="polite">
-		<p>{error}</p>
-		{#if onRetry}
-			<button 
-				class="retry-btn" 
-				on:click={onRetry}
-				aria-label="Retry loading"
-			>
-				Retry
-			</button>
-		{/if}
+		<slot name="error" {error}>
+			<p>{error}</p>
+			{#if onRetry}
+				<button
+					bind:this={retryButton}
+					class="retry-btn"
+					on:click={onRetry}
+					disabled={isLoading}
+					aria-label="Réessayer l’action"
+				>
+					Réessayer
+				</button>
+			{/if}
+		</slot>
 	</div>
-{/if}
-
-{#if isLoading}
-	<!-- 
-		Loading state container. 
-		Uses role="status" and aria-live="polite" for screen readers.
-	-->
-	<div class="loading" role="status" aria-live="polite">
-		<div class="loading-spinner" aria-hidden="true"></div>
-		<p>{loadingMessage}</p>
+{:else if isLoading}
+	<div class="loading" role="status" aria-live="polite" aria-label={loadingMessage}>
+		<slot name="loading">
+			<div class="loading-spinner" aria-hidden="true"></div>
+			<p>{loadingMessage}</p>
+		</slot>
 	</div>
 {/if}
 
 <style>
-/* Loading container styling */
-.loading {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 3rem;
-	color: #666;
-}
+    /* Loading container styling */
+    .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        color: #666;
+    }
 
-/* Spinner animation */
-.loading-spinner {
-	width: 40px;
-	height: 40px;
-	border: 4px solid #f3f3f3;
-	border-top: 4px solid #007bff;
-	border-radius: 50%;
-	animation: spin 1s linear infinite;
-	margin-bottom: 1rem;
-}
+    /* Spinner animation */
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
 
-@keyframes spin {
-	0% { transform: rotate(0deg); }
-	100% { transform: rotate(360deg); }
-}
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 
-/* Error message container styling */
-.error-message {
-	background: #f8d7da;
-	border: 1px solid #f5c6cb;
-	color: #721c24;
-	padding: 1rem;
-	border-radius: 4px;
-	margin-bottom: 1rem;
-	text-align: center;
-}
+    /* Error message container styling */
+    .error-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
 
-/* Retry button styling */
-.retry-btn {
-	background: #dc3545;
-	color: white;
-	border: none;
-	padding: 0.5rem 1rem;
-	border-radius: 4px;
-	cursor: pointer;
-	margin-top: 0.5rem;
-	transition: background-color 0.2s ease;
-}
+    /* Retry button styling */
+    .retry-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        transition: background-color 0.2s ease;
+    }
 
-.retry-btn:hover, .retry-btn:focus {
-	background: #c82333;
-	outline: 2px solid #c82333;
-	outline-offset: 2px;
-}
+    .retry-btn:hover:not(:disabled),
+    .retry-btn:focus {
+        background: #c82333;
+        outline: 2px solid #c82333;
+        outline-offset: 2px;
+    }
 
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-	.loading-spinner {
-		animation: none;
-	}
-}
+    .retry-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .loading-spinner {
+            animation: none;
+        }
+    }
 </style>
