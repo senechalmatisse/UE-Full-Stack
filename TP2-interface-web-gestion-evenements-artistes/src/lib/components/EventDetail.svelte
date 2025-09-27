@@ -1,176 +1,96 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import type { Event } from '../types/pagination';
-	import { createEventService } from '../services/event.service';
-	import { DateFormatterFactory } from '../utils/formatters';
-    import { notifications } from '../stores/notification.store';
-	import { AppError } from '../services/api.error';
+    import EditableForm from "./EditableForm.svelte";
+    import type { Event } from "$lib/types/pagination";
+    import { createEventService } from "$lib/services/event.service";
+    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import { createEventDispatcher } from "svelte";
+    import { DataValidator } from "$lib/utils/validation";
+    import { AppError } from "$lib/services/api.error";
 
-	/**
-	 * Event object provided as a prop.
-	 * Contains all details about the current event being edited.
-	 */
-	export let event: Event;
+    export let event: Event;
 
-	/** Service instance responsible for interacting with the Event API. */
-	const eventService = createEventService();
+    const eventService = createEventService();
+    const frenchDateFormatter = DateFormatterFactory.getFrenchFormatter();
+    const dispatch = createEventDispatcher<{ updated: Event }>();
 
-	/** French date formatter used for displaying event dates. */
-	const frenchDateFormatter = DateFormatterFactory.getFrenchFormatter();
+    // Champs contrôlés
+    let eventLabel = event.label;
+    let eventStartDate = event.startDate;
+    let eventEndDate = event.endDate;
 
-	/** Svelte event dispatcher to notify parent components */
-	const dispatch = createEventDispatcher<{ updated: Event }>();
+    /** Validation centralisée */
+    function validateForm(): void {
+        if (eventLabel.trim().length < 3) {
+            throw new AppError(400, "Le nom doit contenir au moins 3 caractères");
+        }
 
-	/** Local form state variables */
-	let eventLabel: string = event.label;
-	let eventStartDate: string = event.startDate;
-	let eventEndDate: string = event.endDate;
+        const start = new Date(eventStartDate);
+        const end = new Date(eventEndDate);
 
-	/** Indicates whether the form is currently saving. */
-	let isSaving: boolean = false;
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            throw new AppError(400, "Les dates doivent être valides");
+        }
 
-    /**
-	 * Saves the updated event.
-	 *
-	 * - Validates form input.
-	 * - Updates the event via EventService.
-	 * - Dispatches `updated` event with updated data.
-	 * - Displays notifications for success or failure.
-	 */
-	async function handleSave(): Promise<void> {
-		if (!eventLabel.trim()) {
-			notifications.error('Event name is required');
-			return;
-		}
+        if (start >= end) {
+            throw new AppError(400, "La date de fin doit être après celle du début");
+        }
+    }
 
-		if (new Date(eventStartDate) >= new Date(eventEndDate)) {
-			notifications.error('End date must be after start date');
-			return;
-		}
+    async function saveEvent() {
+        validateForm();
 
-		await executeWithLoading(async () => {
-            const updatedEvent = await eventService.update('/events', event.id, {
-				label: eventLabel,
-				startDate: eventStartDate,
-				endDate: eventEndDate
-			});
+        const updated = await eventService.update("/events", event.id, {
+            label: DataValidator.sanitizeString(eventLabel),
+            startDate: DataValidator.sanitizeString(eventStartDate),
+            endDate: DataValidator.sanitizeString(eventEndDate),
+        });
 
-			if (!updatedEvent) {
-				throw new AppError(500, 'Mise à jour échouée');
-			}
+        if (!updated) throw new AppError(500, "Échec lors de la mise à jour de l'événement");
 
-			event = updatedEvent;
-			dispatch('updated', updatedEvent);
-			notifications.success('Événement mis à jour avec succès');
-		}, 'Erreur lors de la mise à jour');
-	}
+        // synchro locale en une seule assignation
+        event = { ...event, ...updated };
 
-	/**
-	 * Wrapper to manage saving state and handle error notifications.
-	 *
-	 * @param action - Async function containing the main logic
-	 * @param fallbackErrorMessage - Message displayed if action fails
-	 */
-	async function executeWithLoading(
-		action: () => Promise<void>,
-		fallbackErrorMessage: string
-	): Promise<void> {
-		isSaving = true;
+        // dispatch vers le parent (+page.svelte)
+        dispatch("updated", event);
 
-		try {
-			await action();
-		} catch (error: unknown) {
-			if (error instanceof AppError) {
-				notifications.error(error.message);
-			} else {
-				notifications.error(fallbackErrorMessage);
-			}
-		} finally {
-			isSaving = false;
-		}
-	}
+        return event;
+    }
 </script>
 
-<section class:is-saving={isSaving}>
-    <h2>Informations sur l’événement</h2>
-
+<EditableForm
+    title="Informations sur l’événement"
+    onSave={saveEvent}
+    successMessage="Événement mis à jour avec succès"
+>
     <p class="event-dates">
         Du <time datetime={event.startDate}>{frenchDateFormatter.format(event.startDate)}</time>
         au <time datetime={event.endDate}>{frenchDateFormatter.format(event.endDate)}</time>
     </p>
 
-    <form on:submit|preventDefault={handleSave} class:is-saving={isSaving}>
-        <div class="form-row">
-            <label for="label">Nom</label>
-            <input id="label" bind:value={eventLabel} minlength="3" required />
-        </div>
+    <div class="form-row">
+        <label for="label">Nom</label>
+        <input id="label" bind:value={eventLabel} />
+    </div>
 
-        <div class="form-group">
-            <label for="startDate">Date de début</label>
-            <input type="date" id="startDate" bind:value={eventStartDate} required />
-        </div>
+    <div class="form-group">
+        <label for="startDate">Date de début</label>
+        <input type="date" id="startDate" bind:value={eventStartDate} />
+    </div>
 
-        <div class="form-group">
-            <label for="endDate">Date de fin</label>
-            <input type="date" id="endDate" bind:value={eventEndDate} required />
-        </div>
-
-        <button type="submit" disabled={isSaving} class="submit-btn">
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-        </button>
-    </form>
-</section>
+    <div class="form-group">
+        <label for="endDate">Date de fin</label>
+        <input type="date" id="endDate" bind:value={eventEndDate} />
+    </div>
+</EditableForm>
 
 <style>
-    /* === Container === */
-    section {
-        background-color: #fdfdfd;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 2rem;
-        max-width: 600px;
-        margin: 2rem auto;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        transition: box-shadow 0.3s ease, opacity 0.3s ease;
-    }
-
-    section.is-saving {
-        opacity: 0.6;
-        box-shadow: none;
-    }
-
-    /* === Headings & Dates === */
-    h2 {
-        font-size: 1.6rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #2c3e50;
-        text-align: center;
-    }
-
+    /* === Dates === */
     .event-dates {
         font-size: 0.95rem;
         color: #7f8c8d;
         margin-bottom: 1.5rem;
         text-align: center;
         transition: color 0.3s ease;
-    }
-
-    section.is-saving .event-dates {
-        color: #999;
-    }
-
-    /* === Form === */
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        transition: opacity 0.3s ease;
-    }
-
-    form.is-saving {
-        opacity: 0.6;
-        pointer-events: none;
     }
 
     /* === Form Fields === */
@@ -201,28 +121,5 @@
         border-color: #3498db;
         box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         outline: none;
-    }
-
-    /* === Submit Button === */
-    .submit-btn {
-        background-color: #3498db;
-        color: white;
-        padding: 0.75rem 1.25rem;
-        border: none;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        align-self: flex-start;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-        background-color: #2980b9;
-    }
-
-    .submit-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
     }
 </style>

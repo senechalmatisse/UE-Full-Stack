@@ -1,9 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { createEventService } from '$lib/services/event.service';
-import { APP_CONFIG } from '$lib/config/app.config';
 import { AppError } from '$lib/services/api.error';
-import type { Event } from '$lib/types/pagination';
 
 /** Singleton instance of EventService used for fetching event data. */
 const eventService = createEventService();
@@ -22,18 +20,30 @@ const eventService = createEventService();
 export const load: PageServerLoad = async ({ params }) => {
     const { id } = params;
 
-    try {
-        const event = await eventService.getById('/events', id);
+	try {
+		const event = await eventService.getById('/events', id);
 
-        if (!event) {
-            throw error(404, 'Événement introuvable');
-        }
-
-        return { event };
-	} catch (err) {
-		if (err instanceof AppError && err.code === 404) {
-			throw error(404, 'Événement introuvable');
+		if (!event) {
+            throw new AppError(404, 'Événement introuvable');
 		}
-		throw error(503, 'Le service est momentanément indisponible');
+
+		return { event };
+	} catch (err) {
+		if (err instanceof AppError) {
+			if (err.code >= 400 && err.code < 500) {
+				throw new AppError(err.code, 'Requête invalide vers le service événements');
+			}
+			// Pour tout autre code AppError → indisponibilité du service
+			throw new AppError(503, 'Le service événements est indisponible');
+		}
+
+		// Si c’est déjà une `HttpError` de SvelteKit → on la relance
+		if (err instanceof Error && 'status' in err) {
+			throw err;
+		}
+
+		// Erreur inattendue : log interne + message générique
+		console.error('Unexpected error in load(event):', err);
+		throw error(500, 'Une erreur interne est survenue');
 	}
 };

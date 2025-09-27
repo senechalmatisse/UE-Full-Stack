@@ -11,6 +11,7 @@ const eventsController = new PaginatedPageController<Event>('events', createEven
  */
 export const load: PageServerLoad = async ({ url }) => {
 	const result = await eventsController.loadPageData(url);
+
 	return {
 		...result,
 		events: result.items

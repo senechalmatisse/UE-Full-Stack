@@ -1,213 +1,169 @@
 <script lang="ts">
-	import { ArrowRight } from 'lucide-svelte';
-	import type { Artist, Event } from '../types/pagination';
-	import { createArtistService } from '../services/artist.service';
-	import { DateFormatterFactory } from '../utils/formatters';
-	import { onMount } from 'svelte';
-
-	/**
-	 * The artist object to display in the card.
-	 * Must conform to the Artist interface.
-	 */
-	export let artist: Artist;
-
-	/**
-	 * Indicates whether the parent component is in a loading state.
-	 * This affects the card's visual opacity and interactivity.
-	 */
-	export let isLoading = false;
-
-	/**
-	 * Delay (in milliseconds) applied to the CSS animation
-	 * for staggered list appearance.
-	 */
-	export let animationDelay = 0;
-
-	/** Events linked to the current artist. */
-	let events: Event[] = [];
-
-	/** Loading state for events fetching. */
-	let isLoadingEvents = true;
-
-	/**
-	 * Error message in case fetching fails.
-	 * Null if no error occurred.
-	 */
-	let error: string | null = null;
-
-	/** Retry counter for fetching events. */
-	let retryCount = 0;
-
-	/** Maximum number of retries allowed for fetching events. */
-	const maxRetries = 3;
-
-	/** Service instance for retrieving artist-related data. */
-	const artistService = createArtistService();
-
-	/**
-	 * Date formatter instance used to format event dates.
-	 * Defaults to a French locale formatter.
-	 */
-	const dateFormatter = DateFormatterFactory.getFrenchFormatter();
-
-	/**
-	 * Fetches the list of events associated with the artist.
-	 * Updates `events`, `isLoadingEvents`, and `error` states accordingly.
-	 */
-	onMount(async () => {
-		await loadArtistEvents();
-	});
+    import type { Artist, Event } from "../types/pagination";
+    import { createArtistService } from "../services/artist.service";
+    import { DateFormatterFactory } from "../utils/formatters";
+    import { onMount } from "svelte";
+    import CardBase from "./CardBase.svelte";
 
     /**
-	 * Attempts to load artist events from the API.
-	 * Handles success, error, and loading states.
-	 */
-	async function loadArtistEvents() {
-		try {
-			isLoadingEvents = true;
-			error = null;
-			events = await artistService.getArtistEvents(artist.id);
-		} catch (err) {
-			error = err instanceof Error ? err.message : "Impossible de charger les événements.";
-		} finally {
-			isLoadingEvents = false;
-		}
-	}
+     * ArtistCard component.
+     *
+     * Displays a card with information about a specific artist,
+     * including a list of associated events (up to 3 initially displayed).
+     * Handles loading, error, and empty states with retry functionality.
+     *
+     * @example
+     * ```svelte
+     * <ArtistCard
+     *   artist={{ id: "1", label: "John Doe" }}
+     *   isLoading={false}
+     *   animationDelay={150}
+     * />
+     * ```
+     */
+
+    /** The artist entity displayed in the card. */
+    export let artist: Artist;
 
     /**
-	 * Retries loading events if the retry limit has not been reached.
-	 */
-	async function retryLoadEvents() {
-		if (retryCount < maxRetries) {
-			retryCount++;
-			await loadArtistEvents();
-		}
-	}
+     * Loading state flag.
+     * When true, the entire card is dimmed and interaction is disabled.
+     */
+    export let isLoading = false;
 
-	/** Subset of events limited to a maximum of 3 for display. */
-	$: displayedEvents = events.slice(0, 3);
+    /** Delay (in milliseconds) applied to the CSS animation for staggered appearance. */
+    export let animationDelay = 0;
 
-	/** Number of additional events beyond the displayed subset. */
-	$: additionalEvents = events.length > 3 ? events.length - 3 : 0;
+    /** Service used to fetch artist-related data. */
+    const artistService = createArtistService();
 
-	/**
-	 * Formats the start and end dates of the event.
-	 * - If start and end are the same date, returns the single date.
-	 * - If different, returns a formatted date range.
-	 * - Falls back to a default error message if formatting fails.
-	 *
-	 * @param event - The event object containing start and end dates
-	 * @returns A formatted date string or a fallback message
-	 */
-	function formatEventDates(event: Event): string {
-		try {
-			const start = dateFormatter.format(event.startDate);
-			const end = dateFormatter.format(event.endDate);
-			return start === end ? start : `${start} – ${end}`;
-		} catch {
-			return 'Dates non disponibles';
-		}
-	}
+    /** French locale date formatter instance. */
+    const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+
+    /** List of events associated with the artist. */
+    let events: Event[] = [];
+
+    /** Loading state specific to event fetching. */
+    let isLoadingEvents = true;
+
+    /** Error message shown when fetching events fails. */
+    let error: string | null = null;
+
+    /** Number of retry attempts for loading events. */
+    let retryCount = 0;
+
+    /** Maximum number of allowed retries for failed event fetches. */
+    const maxRetries = 3;
+
+    /** Automatically load artist events when the component mounts. */
+    onMount(loadArtistEvents);
+
+    /**
+     * Fetches the events associated with the given artist.
+     * Updates `events`, `isLoadingEvents`, and `error` states accordingly.
+     */
+    async function loadArtistEvents() {
+        try {
+            isLoadingEvents = true;
+            error = null;
+            events = await artistService.getArtistEvents(artist.id);
+        } catch (err) {
+            error = err instanceof Error ? err.message : "Impossible de charger les événements.";
+        } finally {
+            isLoadingEvents = false;
+        }
+    }
+
+    /**
+     * Retries fetching the artist events if the maximum retry count
+     * has not been reached.
+     */
+    async function retryLoadEvents() {
+        if (retryCount < maxRetries) {
+            retryCount++;
+            await loadArtistEvents();
+        }
+    }
+
+    /** First 3 events displayed in the card. */
+    $: displayedEvents = events.slice(0, 3);
+
+    /** Number of events not displayed in the preview list. */
+    $: additionalEvents = Math.max(0, events.length - 3);
+
+    /**
+     * Formats an event's start and end dates into a human-readable string.
+     *
+     * @param event - The event object to format.
+     * @returns A formatted string (e.g., "12 Jan 2024 – 15 Jan 2024")
+     *          or "Dates unavailable" if formatting fails.
+     */
+    function formatEventDates(event: Event): string {
+        try {
+            const start = dateFormatter.format(event.startDate);
+            const end = dateFormatter.format(event.endDate);
+            return start === end ? start : `${start} – ${end}`;
+        } catch {
+            return "Dates non disponibles";
+        }
+    }
 </script>
 
-<!-- 
-	Single event card.
-	Displays the artist title, date(s), associated events, 
-	and a link to the artist detail page. 
--->
-<li
-    id={`artist-${artist.id}`}
-    class="card"
-	class:loading={isLoading}
-	style="animation-delay: {animationDelay}ms"
-	aria-labelledby="artist-name-{artist.id}"
+<CardBase
+    id={"artist-" + artist.id}
+    title={artist.label}
+    linkHref={`/artists/${artist.id}`}
+    linkLabel="Voir plus"
+    badgeCount={!isLoadingEvents && !error ? events.length : null}
+    {animationDelay}
+    {isLoading}
 >
-	<header class="card-header">
-		<h2 id="artist-name-{artist.id}" class="card-title">
-			{artist.label}
-		</h2>
-		
-		{#if !isLoadingEvents && !error && events.length > 0}
-			<div class="badge" title="{events.length} événement{events.length > 1 ? 's' : ''}">
-				{events.length}
-			</div>
-		{/if}
-	</header>
+    <div slot="content">
+        {#if isLoadingEvents}
+            <div class="artist-loading">
+                <div class="loading-spinner"></div>
+                <span>Chargement des événements...</span>
+            </div>
+        {:else if error}
+            <div class="artist-error" role="alert">
+                <p class="error-message">{error}</p>
+                {#if retryCount < maxRetries}
+                    <button class="retry-button" on:click={retryLoadEvents}>
+                        Réessayer
+                    </button>
+                {/if}
+            </div>
+        {:else if events.length > 0}
+            <div class="card-section">
+                <h3 class="card-section-title">Événements associés</h3>
+                <ul class="linked-informations">
+                    {#each displayedEvents as event (event.id)}
+                        <li class="event-item">
+                            <a href={`/events/${event.id}`} class="event-details">
+                                <span class="related-item-label">{event.label}</span>
+                                <time class="event-dates" datetime={event.startDate}>
+                                    {formatEventDates(event)}
+                                </time>
+                            </a>
+                        </li>
+                    {/each}
 
-	<div class="card-content">
-		<!-- Artists section -->
-		{#if isLoadingEvents}
-			<div class="artist-loading" aria-live="polite">
-				<div class="loading-spinner"></div>
-				<span>Chargement des événements...</span>
-			</div>
-		{:else if error}
-			<div class="artist-error" role="alert">
-				<div class="error-icon">⚠️</div>
-				<div class="error-content">
-					<p class="error-message">{error}</p>
-					{#if retryCount < maxRetries}
-						<button 
-							class="retry-button"
-							on:click={retryLoadEvents}
-							aria-label="Réessayer de charger les événements"
-						>
-							Réessayer
-						</button>
-					{/if}
-				</div>
-			</div>
-		<!-- Badge showing the number of associated events -->
-		{:else if events.length > 0}
-			<div class="card-section">
-				<h3 class="card-section-title">Événements associés</h3>
-				<ul id="linked-informations">
-					{#each displayedEvents as event (event.id)}
-						<li class="event-item">
-                            <a
-								href={`/events/${event.id}`}
-								class="event-details"
-								aria-label="Voir la fiche de l'événement {event.label}"
-							>
-								<span class="related-item-label">{event.label}</span>
-
-                                <!-- Event date(s) -->
-								<time class="event-dates" datetime="{event.startDate}">
-									{formatEventDates(event)}
-								</time>
-							</a>
-						</li>
-					{/each}
-					<!-- Summary for additional events -->
-					{#if additionalEvents > 0}
-						<li class="additional-information">
-							<span class="additional-count">
-								+{additionalEvents} autre{additionalEvents > 1 ? 's' : ''} événement{additionalEvents > 1 ? 's' : ''}
-							</span>
-						</li>
-					{/if}
-				</ul>
-			</div>
-		{:else}
-			<!-- Empty state when no events are linked -->
-			<div class="no-information">
-				<p>Aucun événement associé pour le moment.</p>
-			</div>
-		{/if}
-	</div>
-
-	<footer class="card-footer">
-		<!-- Link to artist details page -->
-		<a
-			href="/artists/{artist.id}"
-			class="card-link"
-			aria-label="Voir les détails de {artist.label}"
-		>
-			<span>Voir plus</span>
-			<ArrowRight size={16} />
-		</a>
-	</footer>
-</li>
+                    {#if additionalEvents > 0}
+                        <li class="additional-information">
+                            <span class="additional-count">
+                                +{additionalEvents} autre{additionalEvents > 1 ? "s" : ""} événement{additionalEvents > 1 ? "s" : ""}
+                            </span>
+                        </li>
+                    {/if}
+                </ul>
+            </div>
+        {:else}
+            <div class="no-information">
+                <p>Aucun événement associé pour le moment.</p>
+            </div>
+        {/if}
+    </div>
+</CardBase>
 
 <style>
     @import '../styles/card.css';

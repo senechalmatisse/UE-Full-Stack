@@ -10,7 +10,7 @@ export class Sanitizer {
 	static artist(raw: any): Artist {
 		return {
 			id: DataValidator.sanitizeString(raw?.id),
-			label: DataValidator.sanitizeString(raw?.label, 'Artiste inconnue')
+			label: DataValidator.sanitizeString(raw?.label, 'Artiste inconnu(e)')
 		};
 	}
 

@@ -5,6 +5,7 @@
  * API, pagination, date, accessibility, and message settings
  * in one place.
  */
+import { browser } from '$app/environment';
 
 /**
  * Externalized error messages (Open/Closed).
@@ -41,7 +42,9 @@ export const APP_CONFIG = {
 	 */
 	api: {
 		/** Base URL of the API (from environment variable or localhost fallback). */
-		baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+		baseUrl: browser 
+            ? (import.meta.env.VITE_API_BASE_URL_CLIENT || 'http://localhost:8080')
+            : (import.meta.env.VITE_API_BASE_URL_SERVER || 'http://backend:8080'),
 		/** Default timeout for API requests (in milliseconds). */
 		timeout: 5000,
 		/** Default headers applied to every API request. */

@@ -33,6 +33,7 @@ export interface Notification {
  */
 function createNotificationStore() {
 	const { subscribe, update } = writable<Notification[]>([]);
+	const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
 	/**
 	 * Adds a new notification to the store.
@@ -44,16 +45,22 @@ function createNotificationStore() {
 	function add(
 		type: NotificationType,
 		message: string,
-		timeout = 3000,
+		timeout?: number,
 		actions?: NotificationAction[]
 	) {
+		if (timeout === undefined) {
+			if (type === 'success' || type === 'info') timeout = 3000;
+			else timeout = 5000;
+		}
+
 		const id = Date.now() + Math.floor(Math.random() * 1000);
 		const notif: Notification = { id, type, message, timeout, actions };
 
 		update((list) => [...list, notif]);
 
 		if (timeout) {
-			setTimeout(() => remove(id), timeout);
+			const timer = setTimeout(() => remove(id), timeout);
+			timers.set(id, timer);
 		}
 	}
 
@@ -64,6 +71,10 @@ function createNotificationStore() {
 	 */
 	function remove(id: number) {
 		update((list) => list.filter((n) => n.id !== id));
+		if (timers.has(id)) {
+			clearTimeout(timers.get(id));
+			timers.delete(id);
+		}
 	}
 
 	return {

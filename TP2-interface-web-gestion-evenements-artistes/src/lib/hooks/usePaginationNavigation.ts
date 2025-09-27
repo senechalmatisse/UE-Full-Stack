@@ -62,6 +62,7 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	 */
 	async function navigateToPage(pageNumber: number, searchQuery?: string): Promise<void> {
 		loadingManager.startLoading();
+
 		try {
 			const currentSize =
 				get(page).url.searchParams.get('size') || String(defaultSize);

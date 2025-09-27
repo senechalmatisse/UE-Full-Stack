@@ -1,138 +1,108 @@
 <script lang="ts">
-	import { ArrowRight } from 'lucide-svelte';
-	import type { Event } from '../types/pagination';
-	import { DateFormatterFactory } from '../utils/formatters';
+    import type { Event } from "../types/pagination";
+    import { DateFormatterFactory } from "../utils/formatters";
+    import CardBase from "./CardBase.svelte";
 
-	/**
-	 * Event data to display in the card.
-	 * Must conform to the Event interface.
-	 */
-	export let event: Event;
+    /**
+     * EventCard component.
+     *
+     * Displays a card with information about a single event,
+     * including its date(s) and associated artists (up to 2 directly visible).
+     * Additional artists are summarized with a "+X more" message.
+     *
+     * @example
+     * ```svelte
+     * <EventCard
+     *   event={{
+     *     id: "1",
+     *     label: "Summer Festival",
+     *     startDate: "2025-06-01",
+     *     endDate: "2025-06-03",
+     *     artists: [{ id: "a1", label: "Artist One" }]
+     *   }}
+     *   animationDelay={200}
+     * />
+     * ```
+     */
 
-	/**
-	 * Delay (in milliseconds) applied to the CSS animation
-	 * for staggered list appearance.
-	 */
-	export let animationDelay = 0;
 
-	/**
-	 * Date formatter instance used to format event dates.
-	 * Defaults to a French locale formatter.
-	 */
-	const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+    /** The event entity displayed in the card. */
+    export let event: Event;
 
-	/**
-	 * Slice of up to two artist objects to display directly in the card.
-	 * If there are no artists, this will be an empty array.
-	 */
+    /** Delay (in milliseconds) applied to the CSS animation for staggered appearance. */
+    export let animationDelay = 0;
+
+    /** French locale date formatter instance. */
+    const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+
+    /** First 2 artists displayed in the card. */
     $: artistsDisplay = event.artists.slice(0, 2);
 
-	/**
-	 * Number of additional artists not displayed directly in the card.
-	 * Used to show a summary indicator (e.g. "+2 more").
-	 */
-	$: additionalArtists = event.artists.length > 2 ? event.artists.length - 2 : 0;
+    /** Number of artists not displayed in the preview list. */
+    $: additionalArtists = Math.max(0, event.artists.length - 2);
 
-	/**
-	 * Formats the start and end dates of the event.
-	 * - If start and end are the same date, returns the single date.
-	 * - If different, returns a formatted date range.
-	 * - Falls back to a default error message if formatting fails.
-	 *
-	 * @param event - The event object containing start and end dates
-	 * @returns A formatted date string or a fallback message
-	 */
-	function formatEventDates(event: Event): string {
-		try {
-			const start = dateFormatter.format(event.startDate);
-			const end = dateFormatter.format(event.endDate);
-			return start === end ? start : `${start} – ${end}`;
-		} catch {
-			return 'Dates non disponibles';
-		}
-	}
+    /**
+     * Formats an event's start and end dates into a human-readable string.
+     *
+     * @param event - The event object to format.
+     * @returns A formatted string (e.g., "12 Jan 2024 – 15 Jan 2024")
+     *          or "Dates unavailable" if formatting fails.
+     */
+    function formatEventDates(event: Event): string {
+        try {
+            const start = dateFormatter.format(event.startDate);
+            const end = dateFormatter.format(event.endDate);
+            return start === end ? start : `${start} – ${end}`;
+        } catch {
+            return "Dates non disponibles";
+        }
+    }
 </script>
 
-<!-- 
-	Single event card.
-	Displays the event title, date(s), associated artists, 
-	and a link to the event detail page. 
--->
-<li
-    id={`event-${event.id}`}
-    class="card"
-	style="animation-delay: {animationDelay}ms"
-	aria-labelledby="event-name-{event.id}"
+<CardBase
+    id={"event-" + event.id}
+    title={event.label}
+    linkHref={`/events/${event.id}`}
+    linkLabel="Voir détails"
+    badgeCount={event.artists.length}
+    {animationDelay}
 >
-	<header class="card-header">
-		<h2 id="event-title-{event.id}" class="card-title">
-			{event.label}
-		</h2>
+    <div slot="content">
+        <!-- Event date(s) -->
+        <time class="event-dates" datetime={event.startDate}>
+            {formatEventDates(event)}
+        </time>
 
-		<!-- Badge showing the number of associated artists -->
-		{#if event.artists.length > 0}
-			<div
-                class="badge"
-                title="{event.artists.length} artiste{event.artists.length > 1 ? 's' : ''}"
-            >
-				{event.artists.length}
-			</div>
-		{/if}
-
-		<!-- Event date(s) -->
-        <time class="event-dates" datetime="{event.startDate}">
-			{formatEventDates(event)}
-		</time>
-	</header>
-
-	<div class="card-content">
-		<!-- Artists section -->
+        <!-- Artists section -->
         {#if event.artists.length > 0}
             <div class="card-section">
                 <h3 class="card-section-title">Artistes associés</h3>
-                <ul id="linked-informations">
+                <ul class="linked-informations">
                     {#each artistsDisplay as artist (artist.id)}
                         <li class="artist-item">
-                            <a
-								href={`/artists/${artist.id}`}
-								class="artist-details"
-								aria-label="Voir la fiche de l'artiste {artist.label}"
-							>
+                            <a href={`/artists/${artist.id}`} class="artist-details">
                                 <span class="related-item-label">{artist.label}</span>
                             </a>
                         </li>
                     {/each}
-					<!-- Summary for additional artists -->
+
                     {#if additionalArtists > 0}
                         <li class="additional-information">
                             <span class="additional-count">
-                                +{additionalArtists} autre{additionalArtists > 1 ? 's' : ''}
-                                artiste{additionalArtists > 1 ? 's' : ''}
+                                +{additionalArtists} autre{additionalArtists > 1 ? "s" : ""} artiste{additionalArtists > 1 ? "s" : ""}
                             </span>
                         </li>
                     {/if}
                 </ul>
             </div>
         {:else}
-			<!-- Empty state when no artists are linked -->
+            <!-- Empty state when no artists are linked -->
             <div class="no-information">
                 <p>Aucun artiste associé pour le moment.</p>
             </div>
         {/if}
     </div>
-
-	<footer class="card-footer">
-		<!-- Link to event details page -->
-		<a
-			href="/events/{event.id}"
-			class="card-link"
-			aria-label="Voir les détails de {event.label}"
-		>
-			<span>Voir détails</span>
-			<ArrowRight size={16} />
-        </a>
-	</footer>
-</li>
+</CardBase>
 
 <style>
     @import '../styles/card.css';

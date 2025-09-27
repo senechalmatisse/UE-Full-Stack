@@ -1,0 +1,48 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: event-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--connect-timeout", "2", "--max-time", "5", "http://localhost:8080/events"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL_CLIENT=http://localhost:8080
+        - VITE_API_BASE_URL_SERVER=http://backend:8080
+    container_name: event-frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_BASE_URL_CLIENT=http://localhost:8080
+      - VITE_API_BASE_URL_SERVER=http://backend:8080
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src:ro
+      - ./static:/app/static:ro
+      - /app/node_modules
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,6 +1,9 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import type { Event, PaginationState } from '$lib/types/pagination';
+    import { onMount, onDestroy } from 'svelte';
+    import { afterNavigate } from '$app/navigation';
+    import { browser } from '$app/environment';
+
+    import type { Event, PaginationState } from '$lib/types/pagination';
 	import EventsList from '$lib/components/EventsList.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import LoadingState from '$lib/components/LoadingState.svelte';
@@ -34,6 +37,14 @@
 			(state) => (currentLoadingState = state)
 		);
 	});
+
+    // Se déclenche après chaque navigation
+    afterNavigate(() => {
+        if (browser) {
+            // Arrêter l'état de chargement après navigation
+            loadingManager.stopLoading();
+        }
+    });
 
 	/** Unsubscribe from loading state changes on destroy. */
 	onDestroy(() => unsubscribeFromLoading?.());

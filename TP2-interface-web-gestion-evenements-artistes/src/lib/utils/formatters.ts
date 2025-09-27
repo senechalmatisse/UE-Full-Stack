@@ -1,3 +1,4 @@
+import { AppError } from '$lib/services/api.error';
 import type { DateFormatterOptions } from '../types/pagination';
 
 /**
@@ -32,12 +33,11 @@ export class DateFormatter {
 			const date = new Date(dateString);
 
 			if (isNaN(date.getTime())) {
-				throw new Error('Invalid date');
+                throw new AppError(400, "Date invalide");
 			}
 
 			return date.toLocaleDateString(this.locale, this.options);
 		} catch (error) {
-			console.warn('Date formatting error:', error, 'Input:', dateString);
 			return dateString; // Fallback to raw input
 		}
 	}

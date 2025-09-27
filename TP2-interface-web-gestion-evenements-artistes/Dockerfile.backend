@@ -1,0 +1,53 @@
+# Dockerfile pour le backend
+FROM openjdk:17-jdk-slim
+
+# Installer curl et jq pour les scripts
+RUN apt-get update && apt-get install -y curl jq && rm -rf /var/lib/apt/lists/*
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier le JAR et le script d'initialisation
+COPY event-0.0.1-SNAPSHOT.jar /app/
+COPY src/init_data.sh /app/
+
+# Créer un script de démarrage optimisé
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Démarrage de l application Spring Boot..."\n\
+java -Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication \\\n\
+     -Dspring.jpa.defer-datasource-initialization=false \\\n\
+     -Dspring.jpa.hibernate.ddl-auto=create-drop \\\n\
+     -Dserver.tomcat.threads.max=50 \\\n\
+     -Dspring.datasource.hikari.maximum-pool-size=5 \\\n\
+     -jar event-0.0.1-SNAPSHOT.jar &\n\
+APP_PID=$!\n\
+\n\
+echo "Attente de la disponibilité de l API (timeout: 60s)..."\n\
+for i in {1..30}; do\n\
+  if curl -f -s --connect-timeout 2 --max-time 5 http://localhost:8080/events > /dev/null 2>&1; then\n\
+    echo "✅ API prête après $((i*2)) secondes"\n\
+    echo "Exécution du script d initialisation..."\n\
+    ./init_data.sh\n\
+    echo "✅ Initialisation terminée"\n\
+    break\n\
+  fi\n\
+  if [ $i -eq 30 ]; then\n\
+    echo "❌ Timeout: API non disponible après 60s"\n\
+    exit 1\n\
+  fi\n\
+  echo "Tentative $i/30..."\n\
+  sleep 2\n\
+done\n\
+\n\
+wait $APP_PID\n' > /app/startup.sh
+
+# Rendre les scripts exécutables
+RUN chmod +x /app/startup.sh /app/init_data.sh
+
+# Exposer le port 8080
+EXPOSE 8080
+
+# Utiliser le script de démarrage optimisé
+CMD ["./startup.sh"]

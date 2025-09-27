@@ -8,7 +8,7 @@ import type { PaginationState } from '../types/pagination';
  */
 export class PaginatedPageController<T> {
 	private paginationValidator: PaginationValidator;
-	private service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<any> };
+	private service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<unknown> };
 	private endpoint: string;
 
 	/**
@@ -21,7 +21,7 @@ export class PaginatedPageController<T> {
 	 */
 	constructor(
 		endpoint: string,
-		service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<any> },
+		service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<unknown> },
 		minSize = 1,
 		maxSize = 50
 	) {
@@ -40,36 +40,44 @@ export class PaginatedPageController<T> {
 	async loadPageData(
 		url: URL,
 		withSearch = false
-	): Promise<{ items: T[]; searchTerm?: string } & PaginationState> {
+	): Promise<{ items: T[]; searchTerm?: string; errorMessage?: string } & PaginationState> {
 		const { page, size } = this.extractPaginationParams(url);
 		const apiPage = this.paginationValidator.toApiPage(page);
-
 		const searchTerm = withSearch ? url.searchParams.get('search') ?? '' : undefined;
 
 		try {
 			const response = await this.service.getAll(this.endpoint, { page: apiPage, size });
-
-			// Validate API structure
-			if (!response || !Array.isArray(response.content)) {
-				return this.buildEmptyPageState(page, size, `Invalid server response for ${this.endpoint}.`, searchTerm);
-			}
+			const validated = this.validateApiResponse(response);
 
 			// If requested page is out of range, fallback to last valid page
-			if (page > response.totalPages && response.totalPages > 0) {
-				const lastValidPage = response.totalPages;
+			if (page > validated.totalPages && validated.totalPages > 0) {
+				const lastValidPage = validated.totalPages;
 				const lastResponse = await this.service.getAll(this.endpoint, {
 					page: this.paginationValidator.toApiPage(lastValidPage),
 					size
 				});
-				return { ...this.mapApiResponseToView(lastResponse), searchTerm };
+				return { ...this.mapApiResponseToView(this.validateApiResponse(lastResponse)), searchTerm };
 			}
 
-			return { ...this.mapApiResponseToView(response), searchTerm };
+			return { ...this.mapApiResponseToView(validated), searchTerm };
 		} catch (err) {
+			console.error(`Pagination load error for ${this.endpoint}:`, err);
 			const message =
-				err instanceof Error ? err.message : `Failed to load ${this.endpoint} from the server.`;
+				err instanceof Error ? err.message : `Impossible de charger ${this.endpoint}.`;
 			return this.buildEmptyPageState(page, size, message, searchTerm);
 		}
+	}
+
+	/** Vérifie que la réponse API contient bien la structure attendue. */
+	private validateApiResponse(response: any) {
+		if (
+			!response ||
+			!Array.isArray(response.content) ||
+			typeof response.number !== 'number'
+		) {
+			throw new Error(`Réponse invalide du serveur pour ${this.endpoint}`);
+		}
+		return response;
 	}
 
 	/** Extracts and validates pagination params from URL. */
@@ -88,7 +96,7 @@ export class PaginatedPageController<T> {
 			first: DataValidator.sanitizeBoolean(response.first),
 			last: DataValidator.sanitizeBoolean(response.last),
 			totalElements: DataValidator.sanitizeNumber(response.totalElements, 0),
-			size: DataValidator.sanitizeNumber(response.size, 4)
+			size: DataValidator.sanitizeNumber(response.size, 10)
 		};
 	}
 
@@ -104,6 +112,6 @@ export class PaginatedPageController<T> {
 			totalElements: 0,
 			errorMessage,
 			searchTerm
-		} satisfies { items: T[]; searchTerm?: string; errorMessage: string } & PaginationState;
+		};
 	}
 }
