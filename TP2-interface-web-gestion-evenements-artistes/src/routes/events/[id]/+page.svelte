@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Event } from '$lib/types/pagination';
-	import EventDetail from '$lib/components/EventDetail.svelte';
-	import EventArtists from '$lib/components/EventArtists.svelte';
+	import EventDetail from '$lib/components/events/EventDetail.svelte';
+	import EventArtists from '$lib/components/events/EventArtists.svelte';
 
 	/** Props received from the server containing the event details. */
 	export let data: { event: Event };
@@ -33,29 +33,29 @@
 </section>
 
 <style>
-/* === Container === */
-#event-detail {
-    padding: 2rem;
-    margin: 0 auto;
-    max-width: 1200px;
-}
+    /* === Container === */
+    #event-detail {
+        padding: 2rem;
+        margin: 0 auto;
+        max-width: 1200px;
+    }
 
-/* === Header === */
-#event-detail header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
+    /* === Header === */
+    #event-detail header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
 
-/* === Layout === */
-.event-detail-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-}
+    /* === Layout === */
+    .event-detail-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
 
-@media (max-width: 768px) {
-	.event-detail-layout {
-		grid-template-columns: 1fr;
-	}
-}
+    @media (max-width: 768px) {
+        .event-detail-layout {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>

@@ -30,9 +30,7 @@
 		clear: void;
 	}>();
 
-	/**
-	 * Timeout identifier used for debouncing search.
-	 */
+	/** Timeout identifier used for debouncing search. */
 	let debounceTimeoutId: number | null = null;
 
 	/**
@@ -243,7 +241,7 @@
 	}
 
 	.search-button:hover:not(:disabled) {
-		background-color: #2563eb;
+		background-color: #b6c3df;
 	}
 
 	.search-button:disabled {

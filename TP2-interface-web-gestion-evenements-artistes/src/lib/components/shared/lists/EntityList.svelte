@@ -1,26 +1,66 @@
 <script lang="ts">
-import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from 'svelte';
 
-// Définition du type générique directement dans le composant
-type T = $$Generic;
+    /**
+     * EntityList component.
+     *
+     * A generic and reusable list component designed to display
+     * collections of entities (e.g., artists, events).
+     *
+     * Features:
+     * - Handles empty states with optional search reset.
+     * - Displays an item counter when enabled.
+     * - Provides accessible markup (`aria-live`, `role="status"`).
+     * - Allows customization of the empty state and list items through slots.
+     *
+     * @example
+     * ```svelte
+     * <EntityList
+     *   items={artists}
+     *   entityLabel="artists"
+     *   emptyMessage="No artists found."
+     *   showCount={true}
+     *   searchQuery={search}
+     *   on:clear={() => resetSearch()}
+     * >
+     *   <li slot="default" let:items>
+     *     {#each items as artist}
+     *       <ArtistCard {artist} />
+     *     {/each}
+     *   </li>
+     * </EntityList>
+     * ```
+     */
 
-/** Items to display (generic list of entities). */
-export let items: T[] = [];
-/** Label to display in empty state. */
-export let emptyMessage: string = 'No items found.';
-/** Label used for accessibility (e.g., "artists" or "events"). */
-export let entityLabel: string = 'items';
-/** Whether to show a counter above the list. */
-export let showCount: boolean = true;
-/** Optional current search query (for empty state & counter). */
-export let searchQuery: string = '';
+    // Define generic item type
+    type T = $$Generic;
 
-/** Dispatch for custom actions (e.g., clear search). */
-const dispatch = createEventDispatcher<{ clear: void }>();
+    /** Items to display (generic list of entities). */
+    export let items: T[] = [];
 
-function handleClear() {
-	dispatch('clear');
-}
+    /** Message displayed when the list is empty. */
+    export let emptyMessage: string = 'Aucun item trouvé.';
+
+    /** Label used for accessibility and counters (e.g., "artists" or "events"). */
+    export let entityLabel: string = 'items';
+
+    /** Whether to display the counter above the list. */
+    export let showCount: boolean = true;
+
+    /** Current search query (used in empty state & counter). */
+    export let searchQuery: string = '';
+
+    /**
+     * Event dispatcher.
+     *
+     * @event clear - Emitted when the user requests to clear the search query.
+     */
+    const dispatch = createEventDispatcher<{ clear: void }>();
+
+    /** Handles the clear search action and dispatches the `clear` event. */
+    function handleClear() {
+        dispatch('clear');
+    }
 </script>
 
 {#if !items || items.length === 0}
@@ -30,6 +70,7 @@ function handleClear() {
 		aria-live="polite"
 		aria-label="Liste vide des {entityLabel}"
 	>
+		<!-- Empty state slot -->
 		<slot name="empty">
 			<p class="entity-empty-title">{emptyMessage}</p>
 			{#if searchQuery}
@@ -60,6 +101,7 @@ function handleClear() {
 			</div>
 		{/if}
 		<ul class="entity-list">
+			<!-- Default slot for rendering list items -->
 			<slot {items} />
 		</ul>
 	</div>

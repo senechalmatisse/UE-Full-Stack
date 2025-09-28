@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { Artist, Event } from "../types/pagination";
-    import { createArtistService } from "../services/artist.service";
-    import { DateFormatterFactory } from "../utils/formatters";
     import { onMount } from "svelte";
-    import CardBase from "./CardBase.svelte";
+    import type { Artist, Event } from "$lib/types/pagination";
+    import { createArtistService } from "$lib/services/artist.service";
+    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
      * ArtistCard component.
@@ -166,7 +166,7 @@
 </CardBase>
 
 <style>
-    @import '../styles/card.css';
+    @import '$lib/styles/card.css';
 
     /* Loading state */
     .card.loading {

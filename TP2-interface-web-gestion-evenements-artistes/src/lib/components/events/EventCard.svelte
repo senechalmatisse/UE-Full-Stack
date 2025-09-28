@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Event } from "../types/pagination";
-    import { DateFormatterFactory } from "../utils/formatters";
-    import CardBase from "./CardBase.svelte";
+    import type { Event } from "$lib/types/pagination";
+    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
      * EventCard component.
@@ -105,7 +105,7 @@
 </CardBase>
 
 <style>
-    @import '../styles/card.css';
+    @import '$lib/styles/card.css';
 
 	/* Artist list item */
     .artist-item {

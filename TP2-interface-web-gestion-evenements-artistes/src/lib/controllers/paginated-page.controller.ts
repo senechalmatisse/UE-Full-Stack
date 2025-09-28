@@ -1,27 +1,59 @@
-import { PaginationValidator, DataValidator } from '../utils/validation';
-import type { PaginationState } from '../types/pagination';
+import { PaginationValidator, DataValidator } from '$lib/utils/validation';
+import type { PaginationState } from '$lib/types/pagination';
+import { AppError } from '$lib/services/api.error';
 
 /**
  * Generic controller for handling paginated data in SvelteKit pages.
  *
- * @typeParam T - The entity type (e.g., Artist, Event).
+ * Provides a reusable abstraction to:
+ * - Extract and validate pagination parameters from the request URL.
+ * - Query an API service for paginated data.
+ * - Map API responses into a standardized view model.
+ * - Gracefully handle out-of-range pages and errors by returning a safe state.
+ *
+ * @typeParam T - The entity type contained in the paginated response (e.g., `Artist`, `Event`).
+ *
+ * @example
+ * ```ts
+ * const controller = new PaginatedPageController<Artist>("artists", artistService);
+ *
+ * export async function load({ url }) {
+ *   return await controller.loadPageData(url, true);
+ * }
+ * ```
  */
 export class PaginatedPageController<T> {
 	private paginationValidator: PaginationValidator;
-	private service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<unknown> };
+	private service: {
+        getAll: (
+            endpoint: string,
+            params: {
+                page: number;
+                size: number
+            }
+        ) => Promise<unknown>
+    };
 	private endpoint: string;
 
 	/**
-	 * Creates a new paginated controller.
+	 * Creates a new `PaginatedPageController` instance.
 	 *
-	 * @param endpoint - The API endpoint for the resource (e.g., "artists" or "events").
-	 * @param service - The API service providing the `getAll` method.
-	 * @param minSize - Minimum allowed page size (default: 1).
-	 * @param maxSize - Maximum allowed page size (default: 50).
+	 * @param endpoint - The API endpoint for the resource (e.g., `"artists"` or `"events"`).
+	 * @param service - The API service providing the `getAll` method for retrieving paginated data.
+	 * @param minSize - Minimum allowed page size (default: `1`).
+	 * @param maxSize - Maximum allowed page size (default: `50`).
 	 */
 	constructor(
 		endpoint: string,
-		service: { getAll: (endpoint: string, params: { page: number; size: number }) => Promise<unknown> },
+		service: {
+            getAll: (
+                endpoint: string,
+                params: {
+                    page: number;
+                    size: number
+                }
+            ) => Promise<unknown>
+        },
 		minSize = 1,
 		maxSize = 50
 	) {
@@ -31,11 +63,21 @@ export class PaginatedPageController<T> {
 	}
 
 	/**
-	 * Loads paginated data for the given request URL.
+	 * Loads paginated data from the API for a given request URL.
 	 *
-	 * @param url - The request URL containing query parameters.
-	 * @param withSearch - Whether to extract a search term (default: false).
-	 * @returns The formatted data with pagination state.
+	 * - Extracts `page` and `size` parameters from the URL.
+	 * - Calls the API service to retrieve the corresponding data.
+	 * - Optionally extracts a `search` query parameter when `withSearch` is enabled.
+	 * - Falls back to the last available page if the requested one is out of range.
+	 * - Returns an empty state with an error message if the request fails.
+	 *
+	 * @param url - The request URL containing query parameters (`page`, `size`, `search`).
+	 * @param withSearch - Whether to extract a search term from the query string (default: `false`).
+	 * @returns A promise resolving to an object containing:
+	 * - `items`: The list of entities for the current page.
+	 * - `page`, `size`, `totalPages`, `first`, `last`, `totalElements`: Pagination metadata.
+	 * - `searchTerm`: Optional search query (if `withSearch` is enabled).
+	 * - `errorMessage`: Error message if the request fails.
 	 */
 	async loadPageData(
 		url: URL,
@@ -56,38 +98,58 @@ export class PaginatedPageController<T> {
 					page: this.paginationValidator.toApiPage(lastValidPage),
 					size
 				});
-				return { ...this.mapApiResponseToView(this.validateApiResponse(lastResponse)), searchTerm };
+				return {
+                    ...this.mapApiResponseToView(this.validateApiResponse(lastResponse)),
+                    searchTerm
+                };
 			}
 
 			return { ...this.mapApiResponseToView(validated), searchTerm };
 		} catch (err) {
-			console.error(`Pagination load error for ${this.endpoint}:`, err);
 			const message =
 				err instanceof Error ? err.message : `Impossible de charger ${this.endpoint}.`;
 			return this.buildEmptyPageState(page, size, message, searchTerm);
 		}
 	}
 
-	/** Vérifie que la réponse API contient bien la structure attendue. */
+	/**
+	 * Validates that the API response has the expected structure.
+	 *
+	 * @param response - The raw API response.
+	 * @throws {Error} If the response does not contain the required fields.
+	 * @returns The validated response object.
+	 */
 	private validateApiResponse(response: any) {
 		if (
 			!response ||
 			!Array.isArray(response.content) ||
 			typeof response.number !== 'number'
 		) {
-			throw new Error(`Réponse invalide du serveur pour ${this.endpoint}`);
+			throw new AppError(500, `Réponse invalide du serveur pour ${this.endpoint}`);
 		}
 		return response;
 	}
 
-	/** Extracts and validates pagination params from URL. */
+	/**
+	 * Extracts and validates pagination parameters (`page` and `size`) from a URL.
+	 *
+	 * @param url - The request URL containing query parameters.
+	 * @returns A validated `{ page, size }` object.
+	 */
 	private extractPaginationParams(url: URL) {
 		const pageParam = url.searchParams.get('page');
 		const sizeParam = url.searchParams.get('size');
 		return this.paginationValidator.validate(pageParam, sizeParam ?? '10');
 	}
 
-	/** Maps API response to view model. */
+	/**
+	 * Maps a valid API response to the view model expected by SvelteKit pages.
+	 *
+	 * Ensures pagination fields are properly sanitized using {@link DataValidator}.
+	 *
+	 * @param response - The validated API response.
+	 * @returns A formatted object with items and pagination metadata.
+	 */
 	private mapApiResponseToView(response: any) {
 		return {
 			items: response.content as T[],
@@ -100,8 +162,25 @@ export class PaginatedPageController<T> {
 		};
 	}
 
-	/** Builds an empty page state in case of error. */
-	private buildEmptyPageState(page: number, size: number, errorMessage: string, searchTerm?: string) {
+	/**
+	 * Builds a safe fallback page state in case of API failure.
+	 *
+	 * - Returns an empty list of items.
+	 * - Resets pagination metadata to default values.
+	 * - Includes the provided error message.
+	 *
+	 * @param page - The requested page number.
+	 * @param size - The requested page size.
+	 * @param errorMessage - The error message to display.
+	 * @param searchTerm - Optional search term.
+	 * @returns A fallback pagination state object.
+	 */
+	private buildEmptyPageState(
+        page: number,
+        size: number,
+        errorMessage: string,
+        searchTerm?: string
+    ) {
 		return {
 			items: [] as T[],
 			page,

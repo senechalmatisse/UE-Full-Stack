@@ -1,9 +1,22 @@
 <script lang="ts">
-	import ErrorLayout from "$lib/components/ErrorLayout.svelte";
 	import { page } from '$app/stores';
+	import ErrorLayout from "$lib/components/shared/layouts/ErrorLayout.svelte";
 
-	export let error: { message?: string; stack?: string; status?: number } | Error;
+    /**
+     * Error object received from the SvelteKit routing or server.
+     * Can be a plain object or an `Error` instance.
+     * Includes optional message, stack trace, and HTTP status.
+     */
+	export let error: {
+        message?: string;
+        stack?: string;
+        status?: number
+    } | Error;
 
+    /**
+     * HTTP status code associated with the error.
+     * Falls back to `$page.status` or `500` if not provided.
+     */
 	export let status: number | undefined;
 </script>
 

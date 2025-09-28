@@ -1,35 +1,76 @@
 import { writable } from 'svelte/store';
 
-/** Defines the possible types of notifications. */
+/**
+ * Defines the possible types of notifications.
+ *
+ * - `success`: Indicates a successful operation.
+ * - `error`: Indicates a failure or critical issue.
+ * - `info`: Provides general information.
+ * - `warning`: Highlights potential issues or cautionary messages.
+ */
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
-/** Action optionnelle pour une notification (ex: bouton "Réessayer") */
+/**
+ * Optional action associated with a notification.
+ *
+ * Represents a button or interactive element (e.g., "Retry").
+ */
 export interface NotificationAction {
+	/** Label displayed on the action button. */
 	label: string;
+
+	/** Callback executed when the action is triggered. */
 	callback: () => void;
 }
 
-/** Interface representing a single notification. */
+/**
+ * Interface representing a single notification.
+ */
 export interface Notification {
-	/** Unique identifier for the notification */
+	/** Unique identifier for the notification. */
 	id: number;
-	/** Type of the notification (success, error, info, warning) */
+
+	/** Type of the notification (`success`, `error`, `info`, or `warning`). */
 	type: NotificationType;
-	/** Message to display */
+
+	/** Message to display to the user. */
 	message: string;
-	/** Optional duration in milliseconds before auto-removal */
+
+	/** Optional duration in milliseconds before automatic removal. */
 	timeout?: number;
-	/** Actions supplémentaires (boutons optionnels) */
+
+	/** Optional additional actions (e.g., retry, dismiss). */
 	actions?: NotificationAction[];
 }
 
 /**
- * Factory function to create a notification store.
+ * Factory function to create a reactive notification store.
  *
- * Provides reactive methods to add and remove notifications,
- * including auto-removal after a timeout.
+ * This store provides:
+ * - Reactive subscription to the notification list
+ * - Utility methods to add notifications of different types
+ * - Automatic removal of notifications after a timeout
  *
- * @returns An object containing the `subscribe` method and helper methods for each notification type
+ * @returns An object containing:
+ * - `subscribe`: Svelte store subscription method
+ * - `success`: Add a success notification
+ * - `error`: Add an error notification
+ * - `info`: Add an info notification
+ * - `warning`: Add a warning notification
+ * - `remove`: Remove a notification by ID
+ *
+ * @example
+ * ```ts
+ * import { notifications } from '$lib/stores/notification.store';
+ *
+ * // Add a success notification
+ * notifications.success("Profile updated successfully!");
+ *
+ * // Add an error notification with retry action
+ * notifications.error("Failed to load data", 5000, [
+ *   { label: "Retry", callback: () => reloadData() }
+ * ]);
+ * ```
  */
 function createNotificationStore() {
 	const { subscribe, update } = writable<Notification[]>([]);
@@ -40,7 +81,8 @@ function createNotificationStore() {
 	 *
 	 * @param type - The type of notification
 	 * @param message - The message to display
-	 * @param timeout - Optional timeout in milliseconds before automatic removal (default 3000ms)
+	 * @param timeout - Optional timeout before auto-removal (defaults: 3000ms for success/info, 5000ms for error/warning)
+	 * @param actions - Optional actions to attach to the notification
 	 */
 	function add(
 		type: NotificationType,
@@ -49,8 +91,7 @@ function createNotificationStore() {
 		actions?: NotificationAction[]
 	) {
 		if (timeout === undefined) {
-			if (type === 'success' || type === 'info') timeout = 3000;
-			else timeout = 5000;
+			timeout = type === 'success' || type === 'info' ? 3000 : 5000;
 		}
 
 		const id = Date.now() + Math.floor(Math.random() * 1000);
@@ -79,22 +120,33 @@ function createNotificationStore() {
 
 	return {
 		subscribe,
-		/** Add a success notification */
+		/** Add a success notification. */
 		success: (msg: string, t?: number, a?: NotificationAction[]) => add('success', msg, t, a),
-		/** Add an error notification */
+
+		/** Add an error notification. */
 		error: (msg: string, t?: number, a?: NotificationAction[]) => add('error', msg, t, a),
-		/** Add an info notification */
+
+		/** Add an info notification. */
 		info: (msg: string, t?: number, a?: NotificationAction[]) => add('info', msg, t, a),
-		/** Add a warning notification */
+
+		/** Add a warning notification. */
 		warning: (msg: string, t?: number, a?: NotificationAction[]) => add('warning', msg, t, a),
-		/** Remove a notification by ID */
+
+		/** Remove a notification by ID. */
 		remove
 	};
 }
 
 /**
- * Reactive notification store instance.
+ * Global reactive notification store instance.
  *
  * Can be imported and used across components to show notifications.
+ *
+ * @example
+ * ```ts
+ * import { notifications } from '$lib/stores/notification.store';
+ *
+ * notifications.info("Loading data...");
+ * ```
  */
 export const notifications = createNotificationStore();

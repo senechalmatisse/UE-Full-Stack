@@ -7,11 +7,32 @@ import { AppError } from '$lib/services/api.error';
 const artistService = createArtistService();
 
 /**
- * SvelteKit page server load function for retrieving a single artist by ID.
- *
- * - Fetches the artist details and its events from the API.
- * - Throws a 404 error if the artist does not exist.
- * - Throws a 503 error if the server is unavailable.
+ * Page server load function for retrieving artist details and related events in SvelteKit.
+ * 
+ * Responsibilities:
+ * - Fetches the artist record from the API using `ArtistService.getById`.
+ * - Retrieves all events associated with the given artist using `ArtistService.getArtistEvents`.
+ * - Provides both the artist details and events to the SvelteKit page.
+ * 
+ * Error handling strategy:
+ * - Throws a `404 Not Found` error if the artist does not exist.
+ * - Throws a `4xx` error if the request to the artist service is invalid.
+ * - Throws a `503 Service Unavailable` error if the artist service cannot be reached.
+ * - Falls back to a generic `500 Internal Server Error` for unexpected failures.
+ * 
+ * @function load
+ * @type {PageServerLoad}
+ * 
+ * @param {object} options - Parameters provided by SvelteKit.
+ * @param {object} options.params - URL parameters.
+ * @param {string} options.params.id - Unique identifier of the artist.
+ * 
+ * @returns {Promise<{ artist: unknown; events: unknown[] }>}
+ * A promise resolving to an object containing artist details and associated events.
+ * 
+ * @throws {AppError} 404 if the artist is not found.
+ * @throws {AppError} 503 if the artist service is unavailable.
+ * @throws {AppError} 500 for unexpected server errors.
  */
 export const load: PageServerLoad = async ({ params }) => {
 	const { id } = params;
@@ -19,7 +40,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	try {
 		const artist = await artistService.getById('/artists', id);
 		if (!artist) {
-			throw error(404, 'Artiste introuvable');
+			throw new AppError(404, 'Artiste introuvable');
 		}
 
 		const events = await artistService.getArtistEvents(id);
@@ -40,8 +61,6 @@ export const load: PageServerLoad = async ({ params }) => {
 			throw err;
 		}
 
-		// Cas inattendu : on logge mais on masque le détail côté client
-		console.error('Unexpected error in load(artist):', err);
-		throw error(500, 'Une erreur interne est survenue');
+		throw new AppError(500, 'Une erreur interne est survenue');
 	}
 };

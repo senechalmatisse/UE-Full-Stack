@@ -2,60 +2,151 @@
     import { useAssociation } from '$lib/hooks/useAssociation';
     import { AppError } from '$lib/services/api.error';
 
-    type Item = { id: string; label: string };
+    /**
+     * Represents a single association item displayed in the list.
+     */
+    type Item = { 
+        /** Unique identifier for the item */
+        id: string; 
 
+        /** Human-readable label for the item */
+        label: string; 
+    };
+
+    /**
+     * Defines all user-facing messages required for confirmation, success, and error feedback.
+     */
+    type AssociationMessages = {
+        /** Confirmation message shown before adding an item */
+        confirmAdd: string;
+
+        /** Confirmation message shown before removing an item */
+        confirmRemove: string;
+
+        /** Success message displayed when an item is successfully added */
+        successAdd: string;
+
+        /** Success message displayed when an item is successfully removed */
+        successRemove: string;
+
+        /** Error message displayed when adding an item fails */
+        errorAdd: string;
+
+        /** Error message displayed when removing an item fails */
+        errorRemove: string;
+    };
+
+    /**
+     * AssociationManager Component
+     *
+     * This component manages a list of associated items with support for:
+     * - Adding new items by ID
+     * - Removing existing items
+     * - Confirmation dialogs and feedback messages
+     * - Loading state handling
+     *
+     * It relies on a custom hook (`useAssociation`) to abstract entity addition/removal logic.
+     *
+     * @example
+     * <AssociationManager
+     *   title="Associated Artists"
+     *   emptyLabel="No artists linked"
+     *   inputLabel="Artist ID"
+     *   inputPlaceholder="Enter artist ID"
+     *   messages={{
+     *     confirmAdd: "Do you want to add this artist?",
+     *     confirmRemove: "Remove this artist?",
+     *     successAdd: "Artist added successfully!",
+     *     successRemove: "Artist removed successfully!",
+     *     errorAdd: "Could not add artist.",
+     *     errorRemove: "Could not remove artist."
+     *   }}
+     *   items={artists}
+     *   onAdd={addArtist}
+     *   onRemove={removeArtist}
+     * />
+     */
+
+    /** Section title displayed above the association list */
     export let title: string;
-    export let emptyLabel: string;
-    export let inputLabel: string;
-    export let inputPlaceholder: string;
-    export let confirmAddMsg: string;
-    export let confirmRemoveMsg: string;
-    export let successAddMsg: string;
-    export let successRemoveMsg: string;
-    export let errorAddMsg: string;
-    export let errorRemoveMsg: string;
 
-    export let items: Item[];
+    /** Label displayed when the list is empty */
+    export let emptyLabel: string;
+
+    /** Label for the input field used to add a new item */
+    export let inputLabel: string;
+
+    /** Placeholder text for the input field */
+    export let inputPlaceholder: string;
+
+    /** Object containing all feedback and confirmation messages */
+    export let messages: AssociationMessages;
+
+    /** Current list of associated items */
+    export let items: Item[] = [];
+
+    /**
+     * Callback executed when adding a new item.
+     * @param id - The identifier of the item to add.
+     * @returns The newly added item.
+     */
     export let onAdd: (id: string) => Promise<Item>;
+
+    /**
+     * Callback executed when removing an item.
+     * @param item - The item to remove.
+     */
     export let onRemove: (item: Item) => Promise<void>;
 
+    /** Local state: value of the new item ID input */
     let newId = '';
+
+    /** Hook that provides loading state and add/remove entity logic */
     const { isLoading, addEntity, removeEntity } = useAssociation<Item>();
 
-    function addToList(item: Item) {
-        items = [...items, item];
-    }
-
-    function removeFromList(item: Item) {
-        items = items.filter(i => i.id !== item.id);
-    }
-
+    /**
+     * Handles form submission for adding a new item.
+     * - Trims the input ID
+     * - Confirms the action with the user
+     * - Calls the `onAdd` callback
+     * - Updates the list and resets the input field
+     * - Provides success/error feedback
+     */
     async function handleAdd() {
         const id = newId.trim();
         if (!id) return;
 
         await addEntity(
-            confirmAddMsg,
+            messages.confirmAdd,
             async () => {
                 const item = await onAdd(id);
-                if (!item) throw new AppError(500, errorAddMsg);
+                if (!item) throw new AppError(500, messages.errorAdd);
                 newId = '';
                 return item;
             },
-            addToList,
-            successAddMsg,
-            errorAddMsg
+            (item) => (items = [...items, item]),
+            messages.successAdd,
+            messages.errorAdd
         );
     }
 
+    /**
+     * Handles removing an existing item from the list.
+     * - Confirms the action with the user
+     * - Calls the `onRemove` callback
+     * - Updates the list
+     * - Provides success/error feedback
+     *
+     * @param item - The item to remove
+     */
     async function handleRemove(item: Item) {
         await removeEntity(
-            confirmRemoveMsg,
+            messages.confirmRemove,
             () => onRemove(item),
-            removeFromList,
+            () => (items = items.filter(i => i.id !== item.id)),
             item,
-            successRemoveMsg,
-            errorRemoveMsg
+            messages.successRemove,
+            messages.errorRemove
         );
     }
 </script>
@@ -93,7 +184,11 @@
             required
             autocomplete="off"
         />
-        <button type="submit" class="association-form-submit" disabled={$isLoading}>
+        <button
+            type="submit"
+            class="association-form-submit"
+            disabled={$isLoading}
+        >
             Ajouter
         </button>
     </form>
@@ -121,8 +216,8 @@
         text-align: center;
     }
 
-    /* === Artist List === */
-    #association-list {
+    /* === List === */
+    .association-list {
         list-style: none;
         padding: 0;
         margin-bottom: 1.5rem;

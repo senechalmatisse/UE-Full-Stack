@@ -1,5 +1,28 @@
 <script lang="ts">
-    import { notifications } from '../stores/notification.store';
+    import { notifications } from '$lib/stores/notification.store';
+
+    /**
+     * Notification component.
+     *
+     * Displays a stack of notifications coming from the global `notifications` store.
+     * Supports four notification types (`success`, `error`, `info`, `warning`),
+     * optional action buttons, and manual dismissal via a close button.
+     *
+     * Accessibility:
+     * - Uses `role="alert"` and `aria-live="assertive"` to announce messages to screen readers.
+     * - Close and action buttons are fully keyboard-accessible.
+     *
+     * @example
+     * ```svelte
+     * <!-- Triggering a notification -->
+     * <button on:click={() => notifications.success("Saved successfully!")}>
+     *   Show Success
+     * </button>
+     *
+     * <!-- Container -->
+     * <Notification />
+     * ```
+     */
 </script>
 
 <div class="notification-container">
