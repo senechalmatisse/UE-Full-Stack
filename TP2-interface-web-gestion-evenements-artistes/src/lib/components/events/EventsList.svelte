@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Event } from '../types/pagination';
+	import type { Event } from '$lib/types/pagination';
 	import EventCard from './EventCard.svelte';
-	import EntityList from './EntityList.svelte';
+	import EntityList from '../shared/lists/EntityList.svelte';
 
 	export let events: Event[] = [];
 	export let noEventsMessage = 'No events found.';

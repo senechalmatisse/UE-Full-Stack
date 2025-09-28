@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Artist } from '../types/pagination';
+	import type { Artist } from '$lib/types/pagination';
 	import ArtistCard from './ArtistCard.svelte';
-	import EntityList from './EntityList.svelte';
+	import EntityList from '../shared/lists/EntityList.svelte';
 
 	export let artistList: Artist[] = [];
 	export let emptyStateMessage = 'No artists found.';

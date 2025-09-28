@@ -1,8 +1,8 @@
 <script lang="ts">
-    import EditableForm from "./EditableForm.svelte";
+    import { createEventDispatcher } from "svelte";
+    import EditableForm from "../shared/forms/EditableForm.svelte";
     import type { Artist } from "$lib/types/pagination";
     import { createArtistService } from "$lib/services/artist.service";
-    import { createEventDispatcher } from "svelte";
     import { AppError } from "$lib/services/api.error";
 
     export let artist: Artist;

@@ -4,9 +4,9 @@
     import { browser } from '$app/environment';
 
     import type { Event, PaginationState } from '$lib/types/pagination';
-	import EventsList from '$lib/components/EventsList.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import LoadingState from '$lib/components/LoadingState.svelte';
+	import EventsList from '$lib/components/events/EventsList.svelte';
+	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
+	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
 	import { usePaginationNavigation } from '$lib/hooks/usePaginationNavigation';
 
 	/** Props received from the server containing events and pagination state. */

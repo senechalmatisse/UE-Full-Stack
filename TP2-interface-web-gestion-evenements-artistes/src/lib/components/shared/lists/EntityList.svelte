@@ -7,7 +7,7 @@ type T = $$Generic;
 /** Items to display (generic list of entities). */
 export let items: T[] = [];
 /** Label to display in empty state. */
-export let emptyMessage: string = 'No items found.';
+export let emptyMessage: string = 'Aucun item trouvé.';
 /** Label used for accessibility (e.g., "artists" or "events"). */
 export let entityLabel: string = 'items';
 /** Whether to show a counter above the list. */

@@ -2,7 +2,7 @@
     import type { Event, Artist } from '$lib/types/pagination';
     import { createEventService } from '$lib/services/event.service';
     import { createArtistService } from '$lib/services/artist.service';
-    import AssociationManager from './AssociationManager.svelte';
+    import AssociationManager from '../managers/AssociationManager.svelte';
     import { AppError } from '$lib/services/api.error';
 
     export let event: Event;

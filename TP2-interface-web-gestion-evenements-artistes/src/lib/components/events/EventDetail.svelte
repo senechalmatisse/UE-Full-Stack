@@ -1,11 +1,11 @@
 <script lang="ts">
-    import EditableForm from "./EditableForm.svelte";
+    import { createEventDispatcher } from "svelte";
+    import EditableForm from "../shared/forms/EditableForm.svelte";
     import type { Event } from "$lib/types/pagination";
     import { createEventService } from "$lib/services/event.service";
-    import { DateFormatterFactory } from "$lib/utils/formatters";
-    import { createEventDispatcher } from "svelte";
-    import { DataValidator } from "$lib/utils/validation";
     import { AppError } from "$lib/services/api.error";
+    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import { DataValidator } from "$lib/utils/validation";
 
     export let event: Event;
 

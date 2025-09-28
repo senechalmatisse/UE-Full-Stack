@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	try {
 		const artist = await artistService.getById('/artists', id);
 		if (!artist) {
-			throw error(404, 'Artiste introuvable');
+			throw new AppError(404, 'Artiste introuvable');
 		}
 
 		const events = await artistService.getArtistEvents(id);
@@ -42,6 +42,6 @@ export const load: PageServerLoad = async ({ params }) => {
 
 		// Cas inattendu : on logge mais on masque le détail côté client
 		console.error('Unexpected error in load(artist):', err);
-		throw error(500, 'Une erreur interne est survenue');
+		throw new AppError(500, 'Une erreur interne est survenue');
 	}
 };

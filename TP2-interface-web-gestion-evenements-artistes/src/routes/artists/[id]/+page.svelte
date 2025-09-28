@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Artist, Event } from '$lib/types/pagination';
-	import ArtistDetail from '$lib/components/ArtistDetail.svelte';
-	import ArtistEvents from '$lib/components/ArtistEvents.svelte';
+	import ArtistDetail from '$lib/components/artists/ArtistDetail.svelte';
+	import ArtistEvents from '$lib/components/artists/ArtistEvents.svelte';
 
 	/** Props received from the server containing artist and events. */
 	export let data: { artist: Artist; events: Event[] };

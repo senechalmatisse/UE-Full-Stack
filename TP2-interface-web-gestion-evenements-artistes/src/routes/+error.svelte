@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ErrorLayout from "$lib/components/ErrorLayout.svelte";
 	import { page } from '$app/stores';
+	import ErrorLayout from "$lib/components/shared/layouts/ErrorLayout.svelte";
 
 	export let error: { message?: string; stack?: string; status?: number } | Error;
 

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import type { Artist, PaginationState } from '$lib/types/pagination';
-	import ArtistsList from '$lib/components/ArtistsList.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import LoadingState from '$lib/components/LoadingState.svelte';
-	import SearchInput from '$lib/components/SearchInput.svelte';
+	import ArtistsList from '$lib/components/artists/ArtistsList.svelte';
+	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
+	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
+	import SearchInput from '$lib/components/shared/ui/SearchInput.svelte';
 	import { usePaginationNavigation } from '$lib/hooks/usePaginationNavigation';
 
 	/**

@@ -78,7 +78,7 @@
 </li>
 
 <style>
-    @import '../styles/card.css';
+    @import '$lib/styles/card.css';
 
     /* Visual state when card is loading */
     .card.loading {
