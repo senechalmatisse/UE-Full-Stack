@@ -4,16 +4,16 @@ import type {
 	DataService, 
 	PaginatedResponse, 
 	PaginationParams
-} from '../types/pagination';
-import { DataValidator } from '../utils/validation';
-import { APP_CONFIG } from '../config/app.config';
+} from '$lib/types/pagination';
+import { DataValidator } from '$lib/utils/validation';
+import { APP_CONFIG } from '$lib/config/app.config';
 import { AppError } from './api.error';
 
 /**
  * Generic API service implementing the Repository pattern.
  *
- * Provides an abstraction layer for fetching paginated data
- * from an external API with built-in validation, error handling,
+ * Provides a reusable abstraction layer for communicating with external APIs.
+ * Supports pagination, validation, error handling, request cancellation,
  * and timeout management.
  *
  * @template T - The type of entity managed by the service.
@@ -23,7 +23,7 @@ export class ApiService<T> implements DataService<T> {
 	private controllers: Map<string, AbortController> = new Map();
 
 	/**
-	 * Creates a new ApiService instance.
+	 * Creates a new {@link ApiService} instance.
 	 *
 	 * @param config - API configuration including base URL, headers, and timeout.
 	 */
@@ -38,10 +38,10 @@ export class ApiService<T> implements DataService<T> {
 	 * Fetches paginated data from the API.
 	 *
 	 * @param endpoint - The API endpoint (relative to the base URL).
-	 * @param params - Pagination parameters (page and size).
-	 * @returns A paginated response containing items of type T.
+	 * @param params - Pagination parameters (page, size, and optional search).
+	 * @returns A paginated response containing items of type {@link T}.
 	 *
-	 * @throws {Error} If the request fails or the response structure is invalid.
+	 * @throws {AppError} If the request fails or the response structure is invalid.
 	 */
 	async fetchPaginated(endpoint: string, params: PaginationParams): Promise<PaginatedResponse<T>> {
 		const url = this.buildUrl(endpoint, params);
@@ -80,12 +80,13 @@ export class ApiService<T> implements DataService<T> {
     }
 
 	/**
-	 * Executes the HTTP request with timeout handling.
+	 * Executes the HTTP request with timeout and cancellation handling.
 	 *
 	 * @param url - The full request URL.
-	 * @returns A Response object if successful.
+	 * @param endpoint - The associated endpoint used for cancellation tracking.
+	 * @returns A {@link Response} object if successful.
 	 *
-	 * @throws {Error} If the request fails or times out.
+	 * @throws {AppError} If the request fails or times out.
 	 */
 	private async makeRequest(url: string, endpoint: string): Promise<Response> {
 		this.cancelRequest(endpoint);
@@ -116,7 +117,11 @@ export class ApiService<T> implements DataService<T> {
 		}
 	}
 
-    	/** Cancel request by endpoint */
+	/**
+	 * Cancels any ongoing request for the given endpoint.
+	 *
+	 * @param endpoint - The API endpoint associated with the request.
+	 */
 	private cancelRequest(endpoint: string): void {
 		const controller = this.controllers.get(endpoint);
 		if (controller) {
@@ -129,7 +134,7 @@ export class ApiService<T> implements DataService<T> {
 	 * Validates the API response structure.
 	 *
 	 * @param data - The raw response data.
-	 * @throws {Error} If the response does not match the expected structure.
+	 * @throws {AppError} If the response does not match the expected structure.
 	 */
 	private validateResponse(data: any): void {
 		if (!DataValidator.validatePaginatedResponse(data)) {
@@ -137,6 +142,13 @@ export class ApiService<T> implements DataService<T> {
 		}
 	}
 
+	/**
+	 * Builds request options for JSON-based requests (POST or PUT).
+	 *
+	 * @param payload - The body payload to send as JSON.
+	 * @param method - The HTTP method (`POST` or `PUT`).
+	 * @returns A {@link RequestInit} object.
+	 */
 	protected withJsonBody(payload: any, method: 'POST' | 'PUT'): RequestInit {
 		return {
 			method,
@@ -146,10 +158,10 @@ export class ApiService<T> implements DataService<T> {
 	}
 
 	/**
-	 * Handles API errors and maps them to appropriate SvelteKit errors.
+	 * Handles API errors and maps them to SvelteKit {@link error} responses.
 	 *
 	 * @param err - The error to handle.
-	 * @throws {import('@sveltejs/kit').HttpError} - Throws a mapped HTTP error.
+	 * @throws {import('@sveltejs/kit').HttpError} A mapped HTTP error.
 	 */
 	private handleError(err: any): never {
 		if (err instanceof AppError) {
@@ -163,7 +175,22 @@ export class ApiService<T> implements DataService<T> {
 		throw error(503, APP_CONFIG.messages.error.generic);
 	}
 
-	public async request<R>(endpoint: string, options: RequestInit = {}, validator?: (data: any) => data is R): Promise<R | null> {
+	/**
+	 * Sends a generic request to the API.
+	 *
+	 * @template R - The expected response type.
+	 * @param endpoint - The API endpoint (relative to the base URL).
+	 * @param options - Additional {@link RequestInit} options (e.g., method, headers).
+	 * @param validator - Optional custom validator to check the response structure.
+	 * @returns The parsed response of type {@link R}, or `null` if no content.
+	 *
+	 * @throws {AppError} If the request fails or the validation fails.
+	 */
+	public async request<R>(
+		endpoint: string, 
+		options: RequestInit = {}, 
+		validator?: (data: any) => data is R
+	): Promise<R | null> {
         const baseUrl = this.config.baseUrl.replace(/\/$/, '');
         const cleanEndpoint = endpoint.replace(/^\//, '');
         const url = `${baseUrl}/${cleanEndpoint}`;
@@ -184,7 +211,7 @@ export class ApiService<T> implements DataService<T> {
 				throw new AppError(response.status, response.statusText);
             }
 
-    		// Pas de contenu (DELETE 204 par ex.)
+			// No content (e.g., 204 DELETE response)
             if (response.status === 204) {
 				return null;
 			}
@@ -207,21 +234,21 @@ export class ApiService<T> implements DataService<T> {
 }
 
 /**
- * Factory for creating and reusing ApiService instances.
+ * Factory for creating and caching {@link ApiService} instances.
  *
  * Ensures that services are instantiated only once per unique key,
- * effectively implementing a singleton per service type.
+ * effectively implementing a singleton pattern per service type.
  */
 export class ApiServiceFactory {
 	private static instances = new Map<string, ApiService<any>>();
 
 	/**
-	 * Creates or retrieves a cached ApiService instance.
+	 * Creates or retrieves a cached {@link ApiService} instance.
 	 *
 	 * @template T - The type of entity managed by the service.
 	 * @param key - A unique key identifying the service.
-	 * @param config - API configuration.
-	 * @returns An ApiService instance for the given type and config.
+	 * @param config - API configuration (defaults to {@link APP_CONFIG.api}).
+	 * @returns An {@link ApiService} instance for the given type and config.
 	 */
 	static create<T>(key: string, config: ApiConfig = APP_CONFIG.api): ApiService<T> {
 		if (!this.instances.has(key)) {

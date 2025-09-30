@@ -2,44 +2,81 @@
 	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import type { PaginationState } from '$lib/types/pagination';
 	import { PaginationUtils } from '$lib/utils/formatters';
+    import PaginationButton from './PaginationButton.svelte';
 
 	/**
-	 * Current pagination state, including the current page,
-	 * total pages, and navigation flags.
+	 * Pagination component.
+	 *
+	 * Provides accessible navigation controls for traversing
+	 * paginated data (e.g., lists of events or entities).
+	 * Displays previous/next buttons, a set of visible page buttons,
+	 * ellipsis for skipped ranges, and an info summary.
+	 *
+	 * Accessibility:
+	 * - Uses `aria-label`, `aria-current`, and `role="group"` for screen reader support.
+	 * - Keyboard navigation is supported via `Enter` and `Space`.
+	 *
+	 * @example
+	 * ```svelte
+	 * <Pagination
+	 *   paginationState={{
+	 *     page: 2,
+	 *     totalPages: 10,
+	 *     first: false,
+	 *     last: false
+	 *   }}
+	 *   isLoading={false}
+	 *   onPageChange={async (page) => {
+	 *     console.log("Navigate to page:", page);
+	 *   }}
+	 * />
+	 * ```
+	 */
+
+	/**
+	 * Current pagination state, including:
+	 * - `page`: current page index (1-based)
+	 * - `totalPages`: total number of pages
+	 * - `first`: whether the current page is the first one
+	 * - `last`: whether the current page is the last one
 	 */
 	export let paginationState: PaginationState;
 
 	/**
 	 * Callback triggered when a new page is selected.
-	 * Must handle updating the parent state or data.
+	 * Must be implemented by the parent to update data or state.
 	 *
-	 * @param page - The page number requested by the user
+	 * @param page - The target page number
 	 */
 	export let onPageChange: (page: number) => Promise<void>;
 
 	/**
 	 * Loading state flag.
-	 * When true, navigation is disabled to prevent duplicate requests.
+	 * When true, disables navigation to avoid duplicate requests.
 	 */
-	export let isLoading = false;
+	export let isLoading: boolean = false;
 
-	/** Reactive declaration of visible pages, computed using PaginationUtils. */
+	/** List of pages visible in the pagination, computed dynamically. */
 	$: visiblePages = PaginationUtils.getVisiblePages(
 		paginationState.page, 
 		paginationState.totalPages
 	);
 
-	/** Reactive declaration of pagination info string, */
+	/** Human-readable pagination summary string. */
 	$: paginationInfo = PaginationUtils.getPaginationInfo(
 		paginationState.page, 
 		paginationState.totalPages
 	);
 
+	const firstPage = 1;
+	const lastPage = paginationState.totalPages;
+
 	/**
-	 * Handles page selection when clicking a button.
+	 * Handles page selection triggered by button click.
 	 *
-	 * Prevents duplicate triggers if already loading or if
-	 * the user selects the current page.
+	 * Prevents duplicate calls if:
+	 * - already loading
+	 * - the current page is clicked again
 	 *
 	 * @param page - The page number to navigate to
 	 */
@@ -47,99 +84,85 @@
 		if (isLoading || page === paginationState.page) return;
 		await onPageChange(page);
 	}
-
-	/**
-	 * Handles keyboard accessibility for pagination buttons.
-	 *
-	 * Supports Enter and Space keys to activate page navigation.
-	 *
-	 * @param event - KeyboardEvent from the button
-	 * @param pageNum - The page number to navigate to
-	 */
-	function handleKeydown(event: KeyboardEvent, pageNum: number) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			handlePageClick(pageNum);
-		}
-	}
-
 </script>
 
-<!-- 
-	Pagination navigation.
-	Provides accessible controls for navigating between pages of events.
--->
 {#if paginationState.totalPages > 1}
-
     <nav 
         class="pagination" 
-        aria-label="Event pages navigation"
+        aria-label="Navigation entre pages"
     >
-        <button
-            class="pagination-btn prev"
-            on:click={() => handlePageClick(paginationState.page - 1)}
-            disabled={paginationState.first || isLoading}
-            aria-label="Retour vers la page précédente"
+        <PaginationButton
+            page={paginationState.page - 1}
+            disabled={paginationState.first}
+            isLoading={isLoading}
+            ariaLabel="Retour vers la page précédente"
+            extraClass="prev"
+            onClick={handlePageClick}
         >
-            <ArrowLeft size={16}/>
-            &nbsp;&nbsp;Précédent
-        </button>
+            <ArrowLeft size={16} />
+            &nbsp; Précédent
+        </PaginationButton>
 
-		<div class="pagination-pages" role="group" aria-label="Available pages">
-			{#if visiblePages[0] > 1}
-				<button
-					class="pagination-btn page"
-					on:click={() => handlePageClick(1)}
-					on:keydown={(e) => handleKeydown(e, 1)}
-					disabled={isLoading}
-					aria-label="Go to page 1"
-				>
-					1
-				</button>
-				{#if visiblePages[0] > 2}
-					<span class="pagination-ellipsis" aria-hidden="true">…</span>
+		<div
+            class="pagination-pages"
+            role="group"
+            aria-label="Pages disponibles"
+        >
+			{#if visiblePages[0] > firstPage}
+                <PaginationButton
+                    page={1}
+                    isLoading={isLoading}
+                    ariaLabel="Aller vers la page 1"
+                    extraClass="page"
+                    onClick={handlePageClick}
+                />
+				{#if visiblePages[0] > firstPage + 1}
+					<span class="pagination-ellipsis" aria-hidden="true">
+                        …
+                    </span>
 				{/if}
 			{/if}
 
 			{#each visiblePages as pageNum}
-				<button
-					class={`pagination-btn page ${pageNum === paginationState.page ? 'active' : ''}`}
-					on:click={() => handlePageClick(pageNum)}
-					on:keydown={(e) => handleKeydown(e, pageNum)}
-					disabled={pageNum === paginationState.page || isLoading}
-					aria-label="Aller vers la page {pageNum}"
-					aria-current={pageNum === paginationState.page ? 'page' : undefined}
-				>
-					{pageNum}
-				</button>
+                <PaginationButton
+                    page={pageNum}
+                    isActive={pageNum === paginationState.page}
+                    isLoading={isLoading}
+                    ariaLabel={`Aller vers la page ${pageNum}`}
+                    extraClass="page"
+                    onClick={handlePageClick}
+                />
 			{/each}
 
-			{#if visiblePages[visiblePages.length - 1] < paginationState.totalPages}
-				{#if visiblePages[visiblePages.length - 1] < paginationState.totalPages - 1}
-					<span class="pagination-ellipsis" aria-hidden="true">…</span>
+			{#if visiblePages[visiblePages.length - 1] < lastPage}
+				{#if visiblePages[visiblePages.length - 1] < lastPage - 1}
+					<span class="pagination-ellipsis" aria-hidden="true">
+                        …
+                    </span>
 				{/if}
-				<button
-					class="pagination-btn page"
-					on:click={() => handlePageClick(paginationState.totalPages)}
-					on:keydown={(e) => handleKeydown(e, paginationState.totalPages)}
-					disabled={isLoading}
-					aria-label="Aller vers la page {paginationState.totalPages}"
-				>
-					{paginationState.totalPages}
-				</button>
+
+                <PaginationButton
+                    page={paginationState.totalPages}
+                    isLoading={isLoading}
+                    ariaLabel={`Aller vers la page ${paginationState.totalPages}`}
+                    extraClass="page"
+                    onClick={handlePageClick}
+                />
 			{/if}
 		</div>
 
-        <button
-            class="pagination-btn next"
-            on:click={() => handlePageClick(paginationState.page + 1)}
+        <PaginationButton
+            page={paginationState.page + 1}
             disabled={paginationState.last || isLoading}
-            aria-label="Aller vers la page suivante"
+            isLoading={isLoading}
+            ariaLabel="Aller vers la page suivante"
+            extraClass="next"
+            onClick={handlePageClick}
         >
-            Suivant&nbsp;&nbsp;
+            Suivant &nbsp;
             <ArrowRight size={16}/>
-        </button>
-</nav>
+        </PaginationButton>
+    </nav>
 
     <div class="pagination-info" aria-live="polite">
         {paginationInfo}
@@ -164,45 +187,6 @@
         text-align: center;
         font-size: 0.95rem;
         color: #7f8c8d;
-    }
-
-    /* Page buttons */
-    .pagination-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-        border: none;
-        border-radius: 6px;
-        background-color: #ecf0f1;
-        color: #2c3e50;
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .pagination-btn:hover:not(:disabled) {
-        background-color: #bdc3c7;
-        transform: translateY(-1px);
-    }
-
-    .pagination-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* Active page */
-    .pagination-btn.active {
-        background-color: #3498db;
-        color: white;
-        font-weight: 600;
-        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
-    }
-
-    /* Previous / Next buttons */
-    .pagination-btn.prev,
-    .pagination-btn.next {
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.4em;
     }
 
     /* Ellipsis */

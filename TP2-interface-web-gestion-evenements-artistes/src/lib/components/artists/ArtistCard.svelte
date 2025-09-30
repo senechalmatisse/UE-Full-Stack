@@ -3,7 +3,7 @@
     import type { Artist, Event } from "$lib/types/pagination";
     import { createArtistService } from "$lib/services/artist.service";
     import { DateFormatterFactory } from "$lib/utils/formatters";
-    import CardBase from "../shared/cards/CardBase.svelte";
+    import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
      * ArtistCard component.

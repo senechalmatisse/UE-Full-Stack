@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Event } from "$lib/types/pagination";
     import { DateFormatterFactory } from "$lib/utils/formatters";
-    import CardBase from "../shared/cards/CardBase.svelte";
+    import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
      * EventCard component.

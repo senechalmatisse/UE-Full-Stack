@@ -12,8 +12,10 @@
 	/** Props received from the server containing events and pagination state. */
 	export let data: { events: Event[] } & PaginationState;
 
-	/** Manages loading and error states during asynchronous operations. */
-	/** Centralized loading state manager instance */
+    /**
+     * Pagination navigation manager.
+     * Provides loading state management, navigation logic, and retry handling.
+     */
     const {
         loadingManager,
         subscribeToLoading,
@@ -38,10 +40,12 @@
 		);
 	});
 
-    // Se déclenche après chaque navigation
+    /**
+     * After each navigation, stop the loading state if running.
+     * Ensures that navigation transitions properly reset loading.
+     */
     afterNavigate(() => {
         if (browser) {
-            // Arrêter l'état de chargement après navigation
             loadingManager.stopLoading();
         }
     });
@@ -50,10 +54,12 @@
 	onDestroy(() => unsubscribeFromLoading?.());
 
     /**
-	 * Handles page navigation for pagination.
-	 * Updates URL and triggers loading state.
-	 * @param newPage - The target page number to navigate to
-	 */
+     * Handles pagination page changes.
+     * - Prevents duplicate navigation if already loading or on the same page.
+     * - Navigates to the requested page using the pagination navigation hook.
+     * 
+     * @param newPage - The target page number to navigate to.
+     */
 	async function handlePageChange(newPage: number) {
 		if (currentLoadingState.isLoading || newPage === data.page) return;
 		await navigateToPage(newPage);
@@ -115,26 +121,26 @@
 </section>
 
 <style>
-#events-section {
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 2rem;
-}
+    #events-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
 
-.events-title {
-	text-align: center;
-	margin-bottom: 2rem;
-	color: #333;
-	font-size: 2.5rem;
-}
+    .events-title {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #333;
+        font-size: 2.5rem;
+    }
 
-@media (max-width: 768px) {
-	#events-section {
-		padding: 1rem;
-	}
+    @media (max-width: 768px) {
+        #events-section {
+            padding: 1rem;
+        }
 
-	.events-title {
-		font-size: 2rem;
-	}
-}
+        .events-title {
+            font-size: 2rem;
+        }
+    }
 </style>

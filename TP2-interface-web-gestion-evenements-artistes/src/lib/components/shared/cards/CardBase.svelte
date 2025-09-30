@@ -5,7 +5,13 @@
      * Base card component.
      *
      * Provides a reusable skeleton for list items such as events or artists.
-     * Includes a header with a title and optional badge, a content slot, and a footer with a link.
+     * Includes:
+     * - A header with a title and optional badge
+     * - A customizable content area
+     * - A footer with a navigation link
+     *
+     * Supports an optional animation delay for staggered appearance
+     * and a loading state to disable interaction.
      *
      * @example
      * ```svelte
@@ -16,6 +22,7 @@
      *   linkLabel="View details"
      *   badgeCount={3}
      *   animationDelay={150}
+     *   isLoading={false}
      * >
      *   <div slot="content">
      *     <p>Custom content goes here...</p>

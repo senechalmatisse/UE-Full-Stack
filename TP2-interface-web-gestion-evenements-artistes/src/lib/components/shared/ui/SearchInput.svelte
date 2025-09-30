@@ -30,9 +30,7 @@
 		clear: void;
 	}>();
 
-	/**
-	 * Timeout identifier used for debouncing search.
-	 */
+	/** Timeout identifier used for debouncing search. */
 	let debounceTimeoutId: number | null = null;
 
 	/**

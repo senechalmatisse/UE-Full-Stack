@@ -9,7 +9,7 @@
      * Components:
      * - Notification: Displays toast messages or alerts triggered by any child page.
      */
-    import Notification from '$lib//components/shared/ui/Notification.svelte';
+    import Notification from '$lib/components/shared/ui/Notification.svelte';
 </script>
 
 <!-- Slot renders child routes/components -->

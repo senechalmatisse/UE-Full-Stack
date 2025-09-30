@@ -1,32 +1,47 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
-import { LoadingStateManager } from '../utils/formatters';
-import { notifications } from '../stores/notification.store';
+import { LoadingStateManager } from '$lib/utils/formatters';
+import { notifications } from '$lib/stores/notification.store';
 
 /**
  * Configuration options for pagination navigation.
  */
 export interface PaginationNavigationOptions {
-	/** Entity type used for navigation (e.g., "artists" or "events"). */
+	/** Entity type used for navigation (e.g., `"artists"` or `"events"`). */
 	entity: string;
 
-	/** Default number of items per page (falls back to 10 if not provided). */
+	/** Default number of items per page (defaults to 10 if not provided). */
 	defaultSize?: number;
 
-	/** Whether search query support is enabled (adds `search` parameter). */
+	/** Whether search query support is enabled (adds `search` parameter to query string). */
 	withSearch?: boolean;
 }
 
 /**
- * Composable hook for handling pagination navigation with loading and error states.
+ * Composable hook for handling pagination navigation in SvelteKit.
  *
- * @param options - Pagination navigation options
- * @returns Utility functions and state manager for pagination navigation
+ * This hook centralizes logic for:
+ * - Navigating between pages with `goto`.
+ * - Managing loading and error states.
+ * - Handling optional search queries.
+ *
+ * @param options - Pagination navigation options (see {@link PaginationNavigationOptions}).
+ * @returns An object with utilities for pagination navigation:
+ * - `loadingManager`: Internal loading state manager instance.
+ * - `state`: Current loading state snapshot.
+ * - `subscribeToLoading`: Subscribe to loading state updates.
+ * - `navigateToPage`: Navigate to a specific page (with optional search term).
+ * - `resetLoadingState`: Reset the loading state manager.
  *
  * @example
  * ```ts
- * const { navigateToPage, subscribeToLoading, resetLoadingState } = usePaginationNavigation({
+ * const {
+ *   navigateToPage,
+ *   subscribeToLoading,
+ *   resetLoadingState,
+ *   state
+ * } = usePaginationNavigation({
  *   entity: 'artists',
  *   defaultSize: 20,
  *   withSearch: true
@@ -34,6 +49,11 @@ export interface PaginationNavigationOptions {
  *
  * // Navigate to page 2 with a search term
  * await navigateToPage(2, 'Beatles');
+ *
+ * // Subscribe to loading state changes
+ * const unsubscribe = subscribeToLoading((state) => {
+ *   console.log('Loading state:', state);
+ * });
  * ```
  */
 export function usePaginationNavigation(options: PaginationNavigationOptions) {
@@ -43,10 +63,10 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	let currentLoadingState = loadingManager.getState();
 
 	/**
-	 * Subscribe to loading state changes.
+	 * Subscribes to changes in the loading state.
 	 *
-	 * @param callback - Function called when loading state changes
-	 * @returns A cleanup function to unsubscribe
+	 * @param callback - A function that receives the new loading state whenever it changes.
+	 * @returns A cleanup function to unsubscribe from updates.
 	 */
 	function subscribeToLoading(
 		callback: (state: typeof currentLoadingState) => void
@@ -55,12 +75,24 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	}
 
 	/**
-	 * Navigate to a specific page while handling loading and errors.
+	 * Navigates to a specific page while handling loading and error states.
 	 *
-	 * @param pageNumber - The page number to navigate to
-	 * @param searchQuery - Optional search term to include in query params
+	 * Automatically appends query parameters for `page`, `size`, and optionally `search`.
+	 *
+	 * @async
+	 * @param pageNumber - The target page number.
+	 * @param searchQuery - Optional search term (only applied if `withSearch` is enabled).
+	 *
+	 * @example
+	 * ```ts
+	 * await navigateToPage(3); // navigates to ?page=3&size=10
+	 * await navigateToPage(1, 'rock'); // navigates to ?page=1&size=10&search=rock
+	 * ```
 	 */
-	async function navigateToPage(pageNumber: number, searchQuery?: string): Promise<void> {
+	async function navigateToPage(
+        pageNumber: number,
+        searchQuery?: string
+    ): Promise<void> {
 		loadingManager.startLoading();
 
 		try {
@@ -85,21 +117,21 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	}
 
 	return {
-		/** Internal loading state manager instance */
+		/** Internal loading state manager instance (provides full control over loading/error states). */
 		loadingManager,
 
-		/** Getter for the current loading state */
+		/** Current snapshot of the loading state (read-only). */
 		get state() {
 			return currentLoadingState;
 		},
 
-		/** Subscribe to loading state changes */
+		/** Subscribe to loading state changes. */
 		subscribeToLoading,
 
-		/** Navigate to a given page (with optional search term) */
+		/** Navigate to a specific page, optionally including a search query. */
 		navigateToPage,
 
-		/** Reset the loading state manager */
+		/** Reset the loading state to its initial value. */
 		resetLoadingState: () => loadingManager.reset()
 	};
 }
