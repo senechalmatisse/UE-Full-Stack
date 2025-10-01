@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
 import { createEventDispatcher } from "svelte";
+import { getAppConfig } from '$lib/config';
 import { notifications } from "$lib/stores/notification.store";
 import { AppError } from "$lib/services/api.error";
 
@@ -43,7 +44,8 @@ export function useSaveAction<T = any>(successMessage: string) {
     async function run(action: () => Promise<T | null>) {
         isSaving.set(true);
 
-        notifications.info("Sauvegarde en cours...");
+        const APP_CONFIG = getAppConfig();
+        notifications.info(APP_CONFIG.messages.loading);
 
         try {
             const updated = await action();
@@ -54,9 +56,12 @@ export function useSaveAction<T = any>(successMessage: string) {
 
             return updated;
         } catch (err) {
-            notifications.error(
-                err instanceof AppError ? err.message : "Erreur lors de la mise à jour"
-            );
+            const message =
+                err instanceof AppError
+                    ? err.message
+                    : APP_CONFIG.errors.messages.generic;
+
+            notifications.error(message);
             return null;
         } finally {
             isSaving.set(false);

@@ -31,6 +31,9 @@
 	 */
 	export let artistList: Artist[] = [];
 
+    /** Total number of artists available across all pages */
+    export let totalArtists: number | undefined = undefined;
+
 	/**
 	 * The message displayed when no artists are available.
 	 * Useful for customizing empty state feedback.
@@ -52,6 +55,7 @@
 
 <EntityList
 	items={artistList}
+    totalItems={totalArtists}
 	emptyMessage={emptyStateMessage}
 	entityLabel="artiste"
 	searchQuery={currentSearchQuery}

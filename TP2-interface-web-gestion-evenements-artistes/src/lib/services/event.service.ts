@@ -1,5 +1,4 @@
 import type { Event } from '$lib/types/pagination';
-import { Sanitizer } from '$lib/utils/sanitizer';
 import { BaseService } from './base.service';
 import { ApiServiceFactory } from './api.service';
 
@@ -26,10 +25,14 @@ export class EventService extends BaseService<Event> {
         eventId: string,
         artistId: string
     ): Promise<void> {
-		await this.apiService.request<void>(
-            `events/${eventId}/artists/${artistId}`,
-            { method: 'POST' }
-        );
+		try {
+			await this.apiService.request<void>(
+				`events/${eventId}/artists/${artistId}`,
+				{ method: 'POST' }
+			);
+		} catch (err: any) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -44,10 +47,14 @@ export class EventService extends BaseService<Event> {
         eventId: string,
         artistId: string
     ): Promise<void> {
-		await this.apiService.request<void>(
-            `events/${eventId}/artists/${artistId}`,
-            { method: 'DELETE' }
-        );
+		try {
+			await this.apiService.request<void>(
+				`events/${eventId}/artists/${artistId}`,
+				{ method: 'DELETE' }
+			);
+		} catch (err: any) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -57,7 +64,7 @@ export class EventService extends BaseService<Event> {
 	 * @returns A sanitized {@link Event} object.
 	 */
 	protected sanitize(raw: any): Event {
-		return Sanitizer.event(raw);
+        return this.sanitizer.event(raw);
 	}
 }
 

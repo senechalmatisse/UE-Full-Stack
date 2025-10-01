@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { useEntityEditor } from "$lib/hooks/useEntityEditor";
+    import { createArtistService } from "$lib/services/artist.service";
     import EditableForm from "$lib/components/shared/forms/EditableForm.svelte";
     import type { Artist } from "$lib/types/pagination";
-    import { createArtistService } from "$lib/services/artist.service";
-    import { AppError } from "$lib/services/api.error";
 
     /**
      * ArtistDetail Component
@@ -35,12 +34,11 @@
     /** Artist API service instance for CRUD operations. */
     const artistService = createArtistService();
 
-    /**
-     * Dispatches custom events to parent components.
-     * Currently supports:
-     * - `updated`: Fired when the artist is successfully updated.
-     */
-    const dispatch = createEventDispatcher<{ updated: Artist }>();
+    const { saveEntity } = useEntityEditor({
+        entity: artist,
+        service: artistService,
+        endpoint: "/artists"
+    });
 
     /**
      * Local state for the editable artist label.
@@ -60,23 +58,9 @@
      * @returns {Promise<Artist>} The updated artist object.
      */
     async function saveArtist() {
-        if (artistLabel.trim().length < 3) {
-            throw new AppError(400, "Le nom doit contenir au moins 3 caractères");
-        }
-
-        const updated = await artistService.update("/artists", artist.id, {
-            label: artistLabel,
-        });
-
-        if (!updated) throw new AppError(500, "Échec lors de la mise à jour de l'artiste");
-
-        // Update local state
+        const updated = await saveEntity({ label: artistLabel });
         artist = updated;
         artistLabel = updated.label;
-
-        // Notify parent component
-        dispatch("updated", updated);
-
         return updated;
     }
 </script>
@@ -93,32 +77,6 @@
 </EditableForm>
 
 <style>
-    /* === Form Fields === */
-    .form-row {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-    }
-
-    label {
-        font-weight: 500;
-        margin-bottom: 0.4rem;
-        color: #34495e;
-    }
-
-    input {
-        width: 100%;
-        padding: 0.6rem 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 1rem;
-        box-sizing: border-box;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    input:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        outline: none;
-    }
+    @import "$lib/styles/forms/forms.base.css";
+    @import "$lib/styles/forms/forms.fields.css";
 </style>

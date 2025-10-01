@@ -1,6 +1,8 @@
 import type { PaginatedResponse, PaginationParams } from '$lib/types/pagination';
 import { ApiService } from './api.service';
-import { Sanitizer } from '$lib/utils/sanitizer';
+import { getSanitizer } from '$lib/utils/sanitizer/sanitizer.factory';
+import { getAppConfig } from '$lib/config';
+import { AppError } from './api.error';
 
 /**
  * Abstract base service providing standard CRUD operations for entities.
@@ -15,6 +17,7 @@ import { Sanitizer } from '$lib/utils/sanitizer';
  */
 export abstract class BaseService<T> {
 	protected apiService: ApiService<T>;
+    protected sanitizer = getSanitizer();
 
 	/**
 	 * Creates a new BaseService instance.
@@ -38,8 +41,12 @@ export abstract class BaseService<T> {
         endpoint: string,
         params: PaginationParams
     ): Promise<PaginatedResponse<T>> {
-		const response = await this.apiService.fetchPaginated(endpoint, params);
-		return Sanitizer.paginated(response, (item) => this.sanitize(item));
+		try {
+			const response = await this.apiService.fetchPaginated(endpoint, params);
+			return this.sanitizer.paginated(response, (item) => this.sanitize(item));
+		} catch (err) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -52,8 +59,12 @@ export abstract class BaseService<T> {
 	 * @throws {Error} If the request fails.
 	 */
 	public async getById(endpoint: string, id: string): Promise<T | null> {
-		const entity = await this.apiService.request<T>(`${endpoint}/${id}`);
-		return entity ? this.sanitize(entity) : null;
+		try {
+			const entity = await this.apiService.request<T>(`${endpoint}/${id}`);
+			return entity ? this.sanitize(entity) : null;
+		} catch (err) {
+			this.handleError(err, 'notFound');
+		}
 	}
 
 	/**
@@ -69,11 +80,15 @@ export abstract class BaseService<T> {
         endpoint: string,
         payload: Omit<T, 'id'>
     ): Promise<T | null> {
-		const created = await this.apiService.request<T>(
-            endpoint,
-            this.apiService['withJsonBody'](payload, 'POST')
-        );
-		return created ? this.sanitize(created) : null;
+		try {
+			const created = await this.apiService.request<T>(
+				endpoint,
+				this.apiService['withJsonBody'](payload, 'POST')
+			);
+			return created ? this.sanitize(created) : null;
+		} catch (err) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -91,11 +106,15 @@ export abstract class BaseService<T> {
         id: string,
         payload: Partial<T>
     ): Promise<T | null> {
-		const updated = await this.apiService.request<T>(
-            `${endpoint}/${id}`,
-            this.apiService['withJsonBody'](payload, 'PUT')
-        );
-		return updated ? this.sanitize(updated) : null;
+		try {
+			const updated = await this.apiService.request<T>(
+				`${endpoint}/${id}`,
+                this.apiService.withJsonBody(payload, 'PUT')
+			);
+			return updated ? this.sanitize(updated) : null;
+		} catch (err) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -111,11 +130,14 @@ export abstract class BaseService<T> {
         endpoint: string,
         id: string
     ): Promise<boolean> {
-		await this.apiService.request<void>(
-            `${endpoint}/${id}`,
-            { method: 'DELETE' }
-        );
-		return true;
+		try {
+			await this.apiService.request<void>(
+                `${endpoint}/${id}`, { method: 'DELETE' }
+            );
+			return true;
+		} catch (err) {
+			this.handleError(err, 'generic');
+		}
 	}
 
 	/**
@@ -128,4 +150,23 @@ export abstract class BaseService<T> {
 	 * @returns The sanitized entity of type T.
 	 */
 	protected abstract sanitize(data: any): T;
+
+	/**
+	 * Consistent error handling for all CRUD methods.
+	 */
+    protected handleError(
+        err: unknown,
+		fallbackKey: keyof ReturnType<typeof getAppConfig>['errors']['messages']
+    ): never {
+        if (err instanceof AppError) {
+            throw err;
+        }
+
+		const APP_CONFIG = getAppConfig();
+        const code = (err as any)?.status ?? 500;
+        const key = APP_CONFIG.errors.map[code] ?? fallbackKey;
+        const message = APP_CONFIG.errors.messages[key];
+
+        throw new AppError(code, message);
+    }
 }

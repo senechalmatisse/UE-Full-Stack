@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		...result,
-		artists: result.items
+		artists: result.items,
+		artistListTotal: result.totalElements
 	};
 };

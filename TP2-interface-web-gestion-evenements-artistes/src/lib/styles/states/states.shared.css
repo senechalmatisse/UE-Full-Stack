@@ -1,0 +1,142 @@
+/* =============================================================================
+    Shared UI States Stylesheet (states.shared.css)
+   =============================================================================
+    Provides consistent styling for reusable UI states across the application.
+
+    Includes:
+    - Empty state (no information available)
+    - Loading state (spinner + message)
+    - Error state (alert message + retry button)
+    - Shared spinner animation with reduced-motion support
+
+    @file states.shared.css
+    @version 1.0.0
+    @category UI States
+    @public
+============================================================================= */
+
+/* ==========================
+    Base state styles
+   ==========================
+
+    @section Base
+    Shared typography and layout for all state components.
+    Ensures consistent alignment and spacing across empty, loading, and error states.
+*/
+.no-information,
+.state-loading,
+.state-error {
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* ==========================
+    Empty State
+   ==========================
+
+    @section Empty
+    Displayed when no data is available to show.
+    Typically used as a placeholder in cards or list containers.
+*/
+.no-information {
+    color: var(--muted-2, #9ca3af);
+}
+
+.no-information p {
+    margin: 0;
+    font-style: italic;
+}
+
+/* ==========================
+    Loading State
+   ==========================
+
+    @section Loading
+    Provides feedback when content is being fetched.
+    Includes a spinner and an optional message.
+*/
+.state-loading,
+.state-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.state-loading {
+    color: var(--muted, #6b7280);
+}
+
+/* 
+    Spinner element
+
+    @element loading-spinner
+    Circular animation used to indicate loading progress.
+*/
+.loading-spinner {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-top-color: var(--accent, #3b82f6);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Accessibility: respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation: none;
+    }
+}
+
+/* ==========================
+    Error State
+   ==========================
+
+    @section Error
+    Used when an action or data fetch fails.
+    Provides a clear error message and optional retry action.
+*/
+.state-error {
+    padding: 1rem;
+    border-radius: 6px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+/* 
+    Retry Button
+
+    @element retry-btn
+    CTA to retry a failed operation. 
+    Styled with strong contrast and hover/focus feedback.
+*/
+.state-error .retry-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.state-error .retry-btn:hover:not(:disabled),
+.state-error .retry-btn:focus {
+    background: #c82333;
+    outline: 2px solid #c82333;
+    outline-offset: 2px;
+}
+
+.state-error .retry-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

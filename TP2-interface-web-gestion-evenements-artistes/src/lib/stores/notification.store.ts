@@ -58,19 +58,6 @@ export interface Notification {
  * - `info`: Add an info notification
  * - `warning`: Add a warning notification
  * - `remove`: Remove a notification by ID
- *
- * @example
- * ```ts
- * import { notifications } from '$lib/stores/notification.store';
- *
- * // Add a success notification
- * notifications.success("Profile updated successfully!");
- *
- * // Add an error notification with retry action
- * notifications.error("Failed to load data", 5000, [
- *   { label: "Retry", callback: () => reloadData() }
- * ]);
- * ```
  */
 function createNotificationStore() {
 	const { subscribe, update } = writable<Notification[]>([]);

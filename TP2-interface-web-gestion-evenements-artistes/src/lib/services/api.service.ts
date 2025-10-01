@@ -1,13 +1,12 @@
-import { error } from '@sveltejs/kit';
+import { AppError } from './api.error';
+import { getAppConfig, type AppConfig } from "$lib/config";
+import { getDataValidator } from '$lib/utils/validation/factories';
 import type { 
 	ApiConfig, 
 	DataService, 
 	PaginatedResponse, 
 	PaginationParams
 } from '$lib/types/pagination';
-import { DataValidator } from '$lib/utils/validation';
-import { APP_CONFIG } from '$lib/config/app.config';
-import { AppError } from './api.error';
 
 /**
  * Generic API service implementing the Repository pattern.
@@ -21,6 +20,8 @@ import { AppError } from './api.error';
 export class ApiService<T> implements DataService<T> {
 	private config: ApiConfig;
 	private controllers: Map<string, AbortController> = new Map();
+	private dataValidator: ReturnType<typeof getDataValidator>;
+	private messages: AppConfig["errors"]["messages"];
 
 	/**
 	 * Creates a new {@link ApiService} instance.
@@ -28,10 +29,13 @@ export class ApiService<T> implements DataService<T> {
 	 * @param config - API configuration including base URL, headers, and timeout.
 	 */
 	constructor(config: ApiConfig) {
+		const appConfig = getAppConfig();
 		this.config = {
-			...APP_CONFIG.api,
+			...appConfig.api,
 			...config
 		};
+		this.dataValidator = getDataValidator();
+		this.messages = appConfig.errors.messages;
 	}
 
 	/**
@@ -43,15 +47,21 @@ export class ApiService<T> implements DataService<T> {
 	 *
 	 * @throws {AppError} If the request fails or the response structure is invalid.
 	 */
-	async fetchPaginated(endpoint: string, params: PaginationParams): Promise<PaginatedResponse<T>> {
+	async fetchPaginated(
+        endpoint: string,
+        params: PaginationParams
+    ): Promise<PaginatedResponse<T>> {
 		const url = this.buildUrl(endpoint, params);
 
 		try {
 			const response = await this.makeRequest(url, endpoint);
 			const data = await response.json();
 
-			this.validateResponse(data);
-			return data as PaginatedResponse<T>;
+            if (!this.dataValidator.validatePaginatedResponse(data)) {
+                throw new AppError(500, this.messages.server);
+            }
+
+            return data as PaginatedResponse<T>;
 		} catch (err) {
 			this.handleError(err);
 		}
@@ -65,15 +75,20 @@ export class ApiService<T> implements DataService<T> {
 	 * @returns A fully constructed URL string.
 	 */
 	private buildUrl(endpoint: string, params: PaginationParams): string {
-		const baseUrl = this.config.baseUrl.replace(/\/$/, '');
-		const cleanEndpoint = endpoint.replace(/^\//, '');
+        const { defaultSize, minSize, maxSize } = getAppConfig().pagination;
+
+        const page = params.page ?? 1;
+        const size = Math.min(Math.max(params.size ?? defaultSize, minSize), maxSize);
+
+        const baseUrl = this.config.baseUrl.replace(/\/$/, '');
+        const cleanEndpoint = endpoint.replace(/^\//, '');
         const url = new URL(`${baseUrl}/${cleanEndpoint}`);
 
-        url.searchParams.set('page', String(params.page));
-        url.searchParams.set('size', String(params.size));
+        url.searchParams.set('page', String(page));
+        url.searchParams.set('size', String(size));
 
         if (params.search) {
-            url.searchParams.set('search', params.search);
+            url.searchParams.set('label', params.search);
         }
 
         return url.toString();
@@ -106,7 +121,10 @@ export class ApiService<T> implements DataService<T> {
 			this.controllers.delete(endpoint);
 
 			if (!response.ok) {
-				throw new AppError(response.status, response.statusText || APP_CONFIG.messages.error.server);
+				throw new AppError(
+                    response.status,
+					response.statusText || this.messages.server
+                );
 			}
 
 			return response;
@@ -131,25 +149,13 @@ export class ApiService<T> implements DataService<T> {
 	}
 
 	/**
-	 * Validates the API response structure.
-	 *
-	 * @param data - The raw response data.
-	 * @throws {AppError} If the response does not match the expected structure.
-	 */
-	private validateResponse(data: any): void {
-		if (!DataValidator.validatePaginatedResponse(data)) {
-			throw new AppError(500, 'Invalid API response structure');
-		}
-	}
-
-	/**
 	 * Builds request options for JSON-based requests (POST or PUT).
 	 *
 	 * @param payload - The body payload to send as JSON.
 	 * @param method - The HTTP method (`POST` or `PUT`).
 	 * @returns A {@link RequestInit} object.
 	 */
-	protected withJsonBody(payload: any, method: 'POST' | 'PUT'): RequestInit {
+	public withJsonBody(payload: any, method: 'POST' | 'PUT'): RequestInit {
 		return {
 			method,
 			body: JSON.stringify(payload),
@@ -164,16 +170,17 @@ export class ApiService<T> implements DataService<T> {
 	 * @throws {import('@sveltejs/kit').HttpError} A mapped HTTP error.
 	 */
 	private handleError(err: any): never {
-		if (err instanceof AppError) {
-			throw error(err.code, err.message);
-		}
+        if (err instanceof AppError) {
+            throw err;
+        }
 
-		if (err instanceof DOMException && err.name === 'AbortError') {
-			throw error(408, APP_CONFIG.messages.error.timeout);
-		}
+        if (err instanceof DOMException && err.name === 'AbortError') {
+			throw new AppError(408, this.messages.timeout);
+        }
 
-		throw error(503, APP_CONFIG.messages.error.generic);
-	}
+		throw new AppError(503, this.messages.generic);
+    }
+
 
 	/**
 	 * Sends a generic request to the API.
@@ -208,10 +215,13 @@ export class ApiService<T> implements DataService<T> {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-				throw new AppError(response.status, response.statusText);
+                throw new AppError(
+                    response.status,
+                    response.statusText || this.messages.server
+                );
             }
 
-			// No content (e.g., 204 DELETE response)
+			// No content (e.g., 204 DELETE respnse)
             if (response.status === 204) {
 				return null;
 			}
@@ -222,7 +232,7 @@ export class ApiService<T> implements DataService<T> {
 			const json = JSON.parse(text);
 
 			if (validator && !validator(json)) {
-				throw new AppError(500, 'Invalid response structure');
+                throw new AppError(500, this.messages.server);
 			}
 
 			return json as R;
@@ -247,10 +257,10 @@ export class ApiServiceFactory {
 	 *
 	 * @template T - The type of entity managed by the service.
 	 * @param key - A unique key identifying the service.
-	 * @param config - API configuration (defaults to {@link APP_CONFIG.api}).
+	 * @param config - API configuration (defaults to {@link getAppConfig().api}).
 	 * @returns An {@link ApiService} instance for the given type and config.
 	 */
-	static create<T>(key: string, config: ApiConfig = APP_CONFIG.api): ApiService<T> {
+	static create<T>(key: string, config: ApiConfig = getAppConfig().api): ApiService<T> {
 		if (!this.instances.has(key)) {
 			this.instances.set(key, new ApiService<T>(config));
 		}

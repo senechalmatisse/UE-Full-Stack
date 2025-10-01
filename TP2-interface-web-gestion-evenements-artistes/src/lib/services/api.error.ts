@@ -1,10 +1,14 @@
+import { getAppConfig } from '$lib/config';
+
 /**
  * Custom application error for consistent error handling across services.
  *
- * Used to represent domain-specific or API-related errors with
- * an associated HTTP status code.
+ * Extends the native Error with an HTTP status code
+ * and an optional UI color mapped from {@link APP_CONFIG.errors.colors}.
  */
 export class AppError extends Error {
+	code: number;
+	color?: string;
 
 	/**
 	 * Creates a new {@link AppError} instance.
@@ -12,11 +16,9 @@ export class AppError extends Error {
 	 * @param code - The associated HTTP status code (e.g., 404, 500).
 	 * @param message - A descriptive error message.
 	 */
-	constructor(
-		public code: number,
-		message: string
-	) {
+	constructor(code: number, message: string) {
 		super(message);
-		this.name = 'AppError';
+		this.code = code;
+		this.color = getAppConfig().errors.colors[code];
 	}
 }

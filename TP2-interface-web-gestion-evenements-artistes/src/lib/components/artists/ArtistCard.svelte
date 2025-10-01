@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import type { Artist, Event } from "$lib/types/pagination";
     import { createArtistService } from "$lib/services/artist.service";
-    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import { useEventDates } from "$lib/hooks/useEventDates";
     import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
@@ -37,8 +37,7 @@
     /** Service used to fetch artist-related data. */
     const artistService = createArtistService();
 
-    /** French locale date formatter instance. */
-    const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+    const { formatEventDates } = useEventDates();
 
     /** List of events associated with the artist. */
     let events: Event[] = [];
@@ -90,23 +89,6 @@
 
     /** Number of events not displayed in the preview list. */
     $: additionalEvents = Math.max(0, events.length - 3);
-
-    /**
-     * Formats an event's start and end dates into a human-readable string.
-     *
-     * @param event - The event object to format.
-     * @returns A formatted string (e.g., "12 Jan 2024 – 15 Jan 2024")
-     *          or "Dates unavailable" if formatting fails.
-     */
-    function formatEventDates(event: Event): string {
-        try {
-            const start = dateFormatter.format(event.startDate);
-            const end = dateFormatter.format(event.endDate);
-            return start === end ? start : `${start} – ${end}`;
-        } catch {
-            return "Dates non disponibles";
-        }
-    }
 </script>
 
 <CardBase
@@ -120,20 +102,24 @@
 >
     <div slot="content">
         {#if isLoadingEvents}
-            <div class="artist-loading">
+            <div class="state-loading">
                 <div class="loading-spinner"></div>
                 <span>Chargement des événements...</span>
             </div>
         {:else if error}
-            <div class="artist-error" role="alert">
+            <div class="state-error" role="alert">
                 <p class="error-message">{error}</p>
                 {#if retryCount < maxRetries}
-                    <button class="retry-button" on:click={retryLoadEvents}>
+                    <button class="retry-btn" on:click={retryLoadEvents}>
                         Réessayer
                     </button>
                 {/if}
             </div>
-        {:else if events.length > 0}
+        {:else if events.length === 0}
+            <div class="no-information">
+                <p>Aucun événement associé pour le moment.</p>
+            </div>
+        {:else}
             <div class="card-section">
                 <h3 class="card-section-title">Événements associés</h3>
                 <ul class="linked-informations">
@@ -157,88 +143,15 @@
                     {/if}
                 </ul>
             </div>
-        {:else}
-            <div class="no-information">
-                <p>Aucun événement associé pour le moment.</p>
-            </div>
         {/if}
     </div>
 </CardBase>
 
 <style>
-    @import '$lib/styles/card.css';
+    @import "$lib/styles/cards/cards.shared.css";
+    @import "$lib/styles/states/states.shared.css";
 
-    /* Loading state */
-    .card.loading {
-        opacity: 0.7;
-        pointer-events: none;
-    }
-
-    .artist-loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        color: #6b7280;
-        font-size: 0.875rem;
-        padding: 1rem 0;
-    }
-
-    .loading-spinner {
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #e5e7eb;
-        border-top: 2px solid #3b82f6;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* Error state */
-    .artist-error {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-        padding: 1rem;
-        background: #fef2f2;
-        border-radius: 8px;
-        border: 1px solid #fecaca;
-    }
-
-    .error-icon {
-        font-size: 1.25rem;
-        flex-shrink: 0;
-    }
-
-    .error-content {
-        flex: 1;
-    }
-
-    .error-message {
-        margin: 0 0 0.5rem 0;
-        color: #dc2626;
-        font-size: 0.875rem;
-        line-height: 1.4;
-    }
-
-    .retry-button {
-        background: #dc2626;
-        color: white;
-        border: none;
-        padding: 0.375rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .retry-button:hover {
-        background: #b91c1c;
-    }
-
+    /* Event item */
     .event-item {
         padding: 0.75rem;
         background: #f8fafc;
@@ -257,12 +170,6 @@
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-    }
-
-    .additional-count {
-        font-size: 0.8125rem;
-        color: #6b7280;
-        font-style: italic;
     }
 
     /* Responsive */

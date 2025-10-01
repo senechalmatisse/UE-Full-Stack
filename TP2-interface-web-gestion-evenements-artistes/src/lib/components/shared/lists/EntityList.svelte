@@ -38,6 +38,9 @@
     /** Items to display (generic list of entities). */
     export let items: T[] = [];
 
+    /** Total number of items available (across all pages) */
+    export let totalItems: number | undefined = undefined;
+
     /** Message displayed when the list is empty. */
     export let emptyMessage: string = 'Aucun item trouvé.';
 
@@ -61,6 +64,9 @@
     function handleClear() {
         dispatch('clear');
     }
+
+    /** Computes the effective count to display in the counter */
+    $: displayCount = searchQuery ? items.length : totalItems ?? items.length;
 </script>
 
 {#if !items || items.length === 0}
@@ -68,7 +74,7 @@
 		class="entity-empty-container"
 		role="status"
 		aria-live="polite"
-		aria-label="Liste vide des {entityLabel}"
+		aria-label="Liste vide des {entityLabel}s"
 	>
 		<!-- Empty state slot -->
 		<slot name="empty">
@@ -81,7 +87,7 @@
 						on:click={handleClear}
 						aria-label="Réinitialiser la recherche"
 					>
-						voir tous les {entityLabel}
+						voir tous les {entityLabel}s
 					</button>
 				</p>
 			{/if}
@@ -92,12 +98,16 @@
 		class="entity-list-container"
 		role="status"
 		aria-live="polite"
-		aria-label="Liste des {entityLabel}"
+		aria-label="Liste des {entityLabel}s"
 	>
 		{#if showCount}
 			<div class="entity-count" aria-live="polite">
-				{items.length} {entityLabel}{items.length > 1 ? 's' : ''}
-				{#if searchQuery} pour "{searchQuery}" {/if}
+                {#if totalItems !== undefined}
+                    {displayCount} {entityLabel}{displayCount > 1 ? 's' : ''}
+                {:else}
+                    {items.length} {entityLabel}{items.length > 1 ? 's' : ''}
+                {/if}
+                {#if searchQuery} pour "{searchQuery}" {/if}
 			</div>
 		{/if}
 		<ul class="entity-list">

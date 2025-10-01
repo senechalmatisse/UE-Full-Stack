@@ -31,7 +31,7 @@ export default class EntityList<T> extends SvelteComponentTyped<
 		/**
 		 * Accessibility label for the type of entity displayed.
 		 * 
-		 * Example: `"artist"`, `"event"`, `"album"`.
+		 * Example: `"artist"`, `"event"`.
 		 */
 		entityLabel?: string;
 

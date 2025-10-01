@@ -1,0 +1,140 @@
+    /* =============================================================================
+        Shared Card Stylesheet (cards.shared.css)
+       =============================================================================
+        Provides shared structural and typographic styles for cards 
+        used by ArtistCard and EventCard components.
+
+        Includes:
+        - Section wrappers for grouping related content
+        - Section titles and labels for linked entities (artists/events)
+        - Shared list layout for related items
+        - Metadata styles (dates, auxiliary information)
+        - Empty and additional information states
+
+        @file cards.shared.css
+        @version 1.0.0
+        @components ArtistCard, EventCard
+        @category UI Components
+        @public
+    ============================================================================= */
+
+/* ==========================
+    Section Wrapper
+   ==========================
+
+    @section Section
+    Provides margin and fade-in animation for grouped content areas 
+    inside a card (e.g., events list, artists list).
+*/
+.card-section {
+    margin: 0.75rem 0 1rem;
+    color: #555;
+    animation: fadeIn 0.5s ease;
+}
+
+/* 
+    Section Title
+
+    @element card-section-title
+    Small uppercase title used for card subsections 
+    (e.g., "Associated Events", "Associated Artists").
+*/
+.card-section-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ==========================
+    Related Item Labels
+   ==========================
+
+    @section RelatedItems
+    Styles for individual labels within linked items such as
+    artist names or event titles.
+*/
+.related-item-label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.3;
+    color: #1e40af;
+}
+
+/* 
+    Linked Informations List
+
+    @element linked-informations
+    Container for related entity links (artists, events).
+    Displayed as a vertical list with spacing.
+*/
+.linked-informations {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* 
+    Event Dates
+
+    @element event-dates
+    Typography for event date ranges or single dates.
+    Styled in italic serif font for visual distinction.
+*/
+.event-dates {
+    margin-top: 0.25rem;
+    font: italic 0.75rem/1.4 "Georgia", serif;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+/* ==========================
+    Informational States
+   ==========================
+
+    @section States
+    Auxiliary states to indicate additional content or absence of content.
+*/
+
+/* Wrappers for additional information or empty states */
+.additional-information,
+.no-information {
+    text-align: center;
+}
+
+.additional-information {
+    padding: 0.5rem;
+}
+
+/* 
+    Additional Count
+
+    @element additional-count
+    Displays the number of hidden items (e.g., "+2 more").
+*/
+.additional-count,
+.no-information p {
+    font-size: 0.8125rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.additional-count {
+    color: var(--muted);
+}
+
+/* 
+    No Information
+
+    @element no-information
+    Empty state styling for cards without linked entities.
+*/
+.no-information {
+    padding: 1rem 0;
+    color: var(--muted-2);
+}

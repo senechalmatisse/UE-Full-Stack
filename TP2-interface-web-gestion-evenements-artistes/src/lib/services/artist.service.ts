@@ -1,5 +1,4 @@
 import type { Artist, Event } from '$lib/types/pagination';
-import { Sanitizer } from '$lib/utils/sanitizer';
 import { ApiServiceFactory } from './api.service';
 import { BaseService } from './base.service';
 
@@ -23,8 +22,12 @@ export class ArtistService extends BaseService<Artist> {
 	 * @throws {Error} If the request fails.
 	 */
 	async getArtistEvents(id: string): Promise<Event[]> {
-		const events = await this.apiService.request<Event[]>(`artists/${id}/events`);
-		return (events ?? []).map(Sanitizer.event);
+		try {
+			const events = await this.apiService.request<Event[]>(`artists/${id}/events`);
+			return (events ?? []).map((e) => this.sanitizer.event(e));
+		} catch (err) {
+			this.handleError(err, 'notFound');
+		}
 	}
 
 	/**
@@ -34,7 +37,7 @@ export class ArtistService extends BaseService<Artist> {
 	 * @returns A sanitized {@link Artist} object.
 	 */
 	protected sanitize(raw: any): Artist {
-		return Sanitizer.artist(raw);
+        return this.sanitizer.artist(raw);
 	}
 }
 

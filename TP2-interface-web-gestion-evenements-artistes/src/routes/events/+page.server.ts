@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		...result,
-		events: result.items
+		events: result.items,
+        eventListTotal: result.totalElements
 	};
 };

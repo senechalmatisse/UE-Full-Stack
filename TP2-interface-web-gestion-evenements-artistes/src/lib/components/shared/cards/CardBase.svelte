@@ -85,11 +85,5 @@
 </li>
 
 <style>
-    @import '$lib/styles/card.css';
-
-    /* Visual state when card is loading */
-    .card.loading {
-        opacity: 0.7;
-        pointer-events: none;
-    }
+    @import "$lib/styles/cards/cards.base.css";
 </style>

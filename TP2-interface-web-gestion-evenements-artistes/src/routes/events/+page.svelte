@@ -106,6 +106,7 @@
 		{#if !currentLoadingState.isLoading}
 			<EventsList 
 				events={data.events}
+                totalEvents={data.totalElements}
 				noEventsMessage="Aucun événement trouvé."
 			/>
 

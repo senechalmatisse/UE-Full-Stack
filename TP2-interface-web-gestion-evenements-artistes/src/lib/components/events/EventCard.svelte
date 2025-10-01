@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Event } from "$lib/types/pagination";
-    import { DateFormatterFactory } from "$lib/utils/formatters";
+    import { useEventDates } from "$lib/hooks/useEventDates";
     import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**
@@ -25,7 +25,6 @@
      * ```
      */
 
-
     /** The event entity displayed in the card. */
     export let event: Event;
 
@@ -33,30 +32,13 @@
     export let animationDelay = 0;
 
     /** French locale date formatter instance. */
-    const dateFormatter = DateFormatterFactory.getFrenchFormatter();
+    const { formatEventDates } = useEventDates();
 
     /** First 2 artists displayed in the card. */
     $: artistsDisplay = event.artists.slice(0, 2);
 
     /** Number of artists not displayed in the preview list. */
     $: additionalArtists = Math.max(0, event.artists.length - 2);
-
-    /**
-     * Formats an event's start and end dates into a human-readable string.
-     *
-     * @param event - The event object to format.
-     * @returns A formatted string (e.g., "12 Jan 2024 – 15 Jan 2024")
-     *          or "Dates unavailable" if formatting fails.
-     */
-    function formatEventDates(event: Event): string {
-        try {
-            const start = dateFormatter.format(event.startDate);
-            const end = dateFormatter.format(event.endDate);
-            return start === end ? start : `${start} – ${end}`;
-        } catch {
-            return "Dates non disponibles";
-        }
-    }
 </script>
 
 <CardBase
@@ -105,9 +87,10 @@
 </CardBase>
 
 <style>
-    @import '$lib/styles/card.css';
+    @import "$lib/styles/cards/cards.shared.css";
+    @import "$lib/styles/states/states.shared.css";
 
-	/* Artist list item */
+    /* Artist list item */
     .artist-item {
         padding: 0.75rem;
         background: #f8fafc;
@@ -128,10 +111,10 @@
         gap: 0.25rem;
     }
 
-	/* Responsive adjustments */
-	@media (max-width: 768px) {
-		.artist-details {
-			gap: 0.125rem;
-		}
-	}
+    /* Responsive */
+    @media (max-width: 768px) {
+        .artist-details {
+            gap: 0.125rem;
+        }
+    }
 </style>

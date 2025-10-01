@@ -1,0 +1,76 @@
+/* =============================================================================
+    Form Fields Stylesheet (forms.fields.css)
+   =============================================================================
+    Provides shared styles for form fields used inside the EditableForm component.
+
+    Includes:
+    - Row and group containers for consistent field spacing
+    - Label styling with semantic emphasis
+    - Input field base styles with focus states
+
+    @file forms.fields.css
+    @version 1.0.0
+    @component EditableForm
+    @category UI Components
+    @public
+============================================================================= */
+
+/* ==========================
+    Field Containers
+   ==========================
+
+    @section Containers
+    Define vertical stacking for form fields. Both .form-row and .form-group
+    are interchangeable depending on semantic grouping needs.
+*/
+.form-row,
+.form-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* ==========================
+    Field Label
+   ==========================
+
+    @section Label
+    Labels are placed above inputs. 
+    They emphasize readability and clear association with fields.
+*/
+label {
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: #34495e;
+}
+
+/* ==========================
+    Input Fields
+   ==========================
+
+    @section Inputs
+    Base input styling for text, date, and other native HTML inputs.
+    Provides consistent padding, border, radius, and focus feedback.
+*/
+input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 
+    Focus State
+
+    @modifier focus
+    Highlights input when active or focused, 
+    using accent color and subtle glow for accessibility.
+*/
+input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}

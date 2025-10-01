@@ -28,6 +28,9 @@
 	 */
 	export let events: Event[] = [];
 
+    /** Total number of events available across all pages */
+    export let totalEvents: number | undefined = undefined;
+
 	/**
 	 * The message displayed when no events are found.
 	 * Useful for customizing the empty state feedback.
@@ -48,6 +51,7 @@
 
 <EntityList
 	items={sortedEventList}
+    totalItems={totalEvents}
 	emptyMessage={noEventsMessage}
 	entityLabel="événement"
 	showCount={true}

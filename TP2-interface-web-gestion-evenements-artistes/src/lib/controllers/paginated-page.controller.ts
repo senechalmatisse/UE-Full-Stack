@@ -1,6 +1,14 @@
-import { PaginationValidator, DataValidator } from '$lib/utils/validation';
-import type { PaginationState } from '$lib/types/pagination';
+import {
+    getPaginationValidator,
+    getDataValidator
+} from '$lib/utils/validation/factories';
+import type {
+    PaginationState,
+    PaginatedResponse,
+    PaginationParams
+} from '$lib/types/pagination';
 import { AppError } from '$lib/services/api.error';
+import { getAppConfig } from '$lib/config';
 
 /**
  * Generic controller for handling paginated data in SvelteKit pages.
@@ -23,16 +31,11 @@ import { AppError } from '$lib/services/api.error';
  * ```
  */
 export class PaginatedPageController<T> {
-	private paginationValidator: PaginationValidator;
-	private service: {
-        getAll: (
-            endpoint: string,
-            params: {
-                page: number;
-                size: number
-            }
-        ) => Promise<unknown>
-    };
+	private paginationValidator: ReturnType<typeof getPaginationValidator>;
+	private dataValidator: ReturnType<typeof getDataValidator>;
+    private service: {
+		getAll: (endpoint: string, params: PaginationParams) => Promise<PaginatedResponse<T>>;
+	};
 	private endpoint: string;
 
 	/**
@@ -40,26 +43,15 @@ export class PaginatedPageController<T> {
 	 *
 	 * @param endpoint - The API endpoint for the resource (e.g., `"artists"` or `"events"`).
 	 * @param service - The API service providing the `getAll` method for retrieving paginated data.
-	 * @param minSize - Minimum allowed page size (default: `1`).
-	 * @param maxSize - Maximum allowed page size (default: `50`).
 	 */
 	constructor(
-		endpoint: string,
-		service: {
-            getAll: (
-                endpoint: string,
-                params: {
-                    page: number;
-                    size: number
-                }
-            ) => Promise<unknown>
-        },
-		minSize = 1,
-		maxSize = 50
-	) {
-		this.paginationValidator = new PaginationValidator(minSize, maxSize);
+        endpoint: string,
+        service: { getAll: (endpoint: string, params: PaginationParams) => Promise<PaginatedResponse<T>> }
+    ) {
 		this.service = service;
 		this.endpoint = endpoint;
+		this.paginationValidator = getPaginationValidator();
+		this.dataValidator = getDataValidator();
 	}
 
 	/**
@@ -83,12 +75,16 @@ export class PaginatedPageController<T> {
 		url: URL,
 		withSearch = false
 	): Promise<{ items: T[]; searchTerm?: string; errorMessage?: string } & PaginationState> {
-		const { page, size } = this.extractPaginationParams(url);
+        const { page, size } = this.extractPaginationParams(url);
 		const apiPage = this.paginationValidator.toApiPage(page);
 		const searchTerm = withSearch ? url.searchParams.get('search') ?? '' : undefined;
+		const APP_CONFIG = getAppConfig();
 
 		try {
-			const response = await this.service.getAll(this.endpoint, { page: apiPage, size });
+			const response = await this.service.getAll(
+                this.endpoint,
+                { page: apiPage, size, search: searchTerm }
+            );
 			const validated = this.validateApiResponse(response);
 
 			// If requested page is out of range, fallback to last valid page
@@ -96,7 +92,8 @@ export class PaginatedPageController<T> {
 				const lastValidPage = validated.totalPages;
 				const lastResponse = await this.service.getAll(this.endpoint, {
 					page: this.paginationValidator.toApiPage(lastValidPage),
-					size
+					size,
+					search: searchTerm
 				});
 				return {
                     ...this.mapApiResponseToView(this.validateApiResponse(lastResponse)),
@@ -107,7 +104,10 @@ export class PaginatedPageController<T> {
 			return { ...this.mapApiResponseToView(validated), searchTerm };
 		} catch (err) {
 			const message =
-				err instanceof Error ? err.message : `Impossible de charger ${this.endpoint}.`;
+				err instanceof AppError
+					? err.message
+					: APP_CONFIG.errors.messages.server;
+
 			return this.buildEmptyPageState(page, size, message, searchTerm);
 		}
 	}
@@ -120,8 +120,7 @@ export class PaginatedPageController<T> {
 	 * @returns The validated response object.
 	 */
 	private validateApiResponse(response: any) {
-		if (
-			!response ||
+		if (!response ||
 			!Array.isArray(response.content) ||
 			typeof response.number !== 'number'
 		) {
@@ -154,11 +153,11 @@ export class PaginatedPageController<T> {
 		return {
 			items: response.content as T[],
 			page: this.paginationValidator.fromApiPage(response.number),
-			totalPages: DataValidator.sanitizeNumber(response.totalPages, 1),
-			first: DataValidator.sanitizeBoolean(response.first),
-			last: DataValidator.sanitizeBoolean(response.last),
-			totalElements: DataValidator.sanitizeNumber(response.totalElements, 0),
-			size: DataValidator.sanitizeNumber(response.size, 10)
+			totalPages: this.dataValidator.sanitizeNumber(response.totalPages, 1),
+			first: this.dataValidator.sanitizeBoolean(response.first),
+			last: this.dataValidator.sanitizeBoolean(response.last),
+			totalElements: this.dataValidator.sanitizeNumber(response.totalElements, 0),
+			size: this.dataValidator.sanitizeNumber(response.size, 10)
 		};
 	}
 
@@ -181,11 +180,13 @@ export class PaginatedPageController<T> {
         errorMessage: string,
         searchTerm?: string
     ) {
+		const APP_CONFIG = getAppConfig();
+
 		return {
 			items: [] as T[],
 			page,
 			size,
-			totalPages: 1,
+            totalPages: APP_CONFIG.pagination.minSize,
 			first: true,
 			last: true,
 			totalElements: 0,

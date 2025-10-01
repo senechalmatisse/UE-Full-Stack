@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { APP_CONFIG, errorColors } from "$lib/config/app.config";
+	import { ArrowLeft } from 'lucide-svelte';
+	import { getAppConfig } from "$lib/config";
 	import type { AppError } from "$lib/services/api.error";
 
 	/** Type representing possible error formats supported by the layout. */
@@ -21,14 +22,16 @@
 	 */
 	export let layoutError: LayoutError = null;
 
-	/** Map of predefined error messages from configuration. */
-	const errorMessageMap = APP_CONFIG.messages.error.map;
+	/**
+	 * Récupération de la config actuelle via l'injecteur.
+	 */
+	const APP_CONFIG = getAppConfig();
 
 	/**
 	 * Derived key used to resolve the error message
 	 * from configuration based on the provided status code.
 	 */
-	$: errorKey = errorMessageMap[httpStatus] ?? "generic";
+	$: errorKey = APP_CONFIG.errors.map[httpStatus] ?? "generic";
 
 	/**
 	 * Human-readable error message.
@@ -39,17 +42,17 @@
 	 * 4. Generic fallback message
 	 */
 	$: errorMessage =
-		APP_CONFIG.messages.error[errorKey] ||
+		APP_CONFIG.errors.messages[errorKey] ||
 		(layoutError as AppError)?.message ||
 		(layoutError instanceof Error
 			? layoutError.message
-			: APP_CONFIG.messages.error.generic);
+			: APP_CONFIG.errors.messages.generic);
 
 	/**
 	 * Dynamic color for the error code heading.
 	 * Based on `errorColors` mapping, falls back to crimson.
 	 */
-	$: errorColor = errorColors[httpStatus] ?? "crimson";
+	$: errorColor = APP_CONFIG.errors.colors[httpStatus] ?? "crimson";
 </script>
 
 <main
@@ -68,7 +71,10 @@
 
 	<div class="error-actions">
 		{#if httpStatus === 404}
-			<a href="/" class="btn-primary">⬅ Retour à l’accueil</a>
+			<a href="/" class="btn-primary">
+                <ArrowLeft size={16} />
+                &nbsp; Retour à l’accueil
+            </a>
 		{:else if httpStatus === 403}
 			<button on:click={() => history.back()} class="btn-secondary">
 				Retour

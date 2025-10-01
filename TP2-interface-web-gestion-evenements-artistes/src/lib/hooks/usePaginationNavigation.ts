@@ -1,8 +1,10 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
-import { LoadingStateManager } from '$lib/utils/formatters';
+import { getAppConfig } from '$lib/config';
+import { LoadingStateManager } from '$lib/utils/manager/loading-state.manager';
 import { notifications } from '$lib/stores/notification.store';
+import { ConfigErrorResolver } from '$lib/utils/resolvers/error.resolver';
 
 /**
  * Configuration options for pagination navigation.
@@ -57,9 +59,14 @@ export interface PaginationNavigationOptions {
  * ```
  */
 export function usePaginationNavigation(options: PaginationNavigationOptions) {
-	const { entity, defaultSize = 10, withSearch = false } = options;
+	const APP_CONFIG = getAppConfig();
+	const {
+		entity,
+		defaultSize = APP_CONFIG.pagination.defaultSize,
+		withSearch = false
+	} = options;
 
-	const loadingManager = new LoadingStateManager();
+	const loadingManager = new LoadingStateManager(new ConfigErrorResolver());
 	let currentLoadingState = loadingManager.getState();
 
 	/**
@@ -82,12 +89,6 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	 * @async
 	 * @param pageNumber - The target page number.
 	 * @param searchQuery - Optional search term (only applied if `withSearch` is enabled).
-	 *
-	 * @example
-	 * ```ts
-	 * await navigateToPage(3); // navigates to ?page=3&size=10
-	 * await navigateToPage(1, 'rock'); // navigates to ?page=1&size=10&search=rock
-	 * ```
 	 */
 	async function navigateToPage(
         pageNumber: number,
@@ -108,9 +109,7 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 			await goto(url);
 		} catch (err) {
 			notifications.error(`Une erreur est survenue lors de la navigation vers ${entity}.`);
-			loadingManager.setError(
-				err instanceof Error ? err.message : 'Erreur inconnue'
-			);
+            loadingManager.setError(500); 
 		} finally {
 			loadingManager.stopLoading();
 		}

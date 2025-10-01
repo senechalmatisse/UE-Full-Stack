@@ -126,6 +126,7 @@
 		{#if !currentLoadingState.isLoading}
 			<ArtistsList 
 				artistList={filteredArtists}
+                totalArtists={currentSearchTerm ? undefined : data.totalElements}
 				emptyStateMessage={emptyMessage}
 				currentSearchQuery={currentSearchTerm}
 				isLoading={currentLoadingState.isLoading}

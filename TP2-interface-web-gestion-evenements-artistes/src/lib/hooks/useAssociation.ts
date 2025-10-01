@@ -1,4 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
+import { getAppConfig } from '$lib/config';
 import { notifications } from '$lib/stores/notification.store';
 import { AppError } from '$lib/services/api.error';
 
@@ -8,7 +9,6 @@ type UpdateFn<T> = (entity: T, action: 'add' | 'remove') => void;
 type ActionResult<R> =
 	| { success: true; data?: R }
 	| { success: false; error?: string };
-
 
 /**
  * Hook to manage associations between entities (e.g., artists ↔ events).
@@ -64,11 +64,12 @@ export function useAssociation<T>() {
 	 */
 	async function performAction<R>(
 		action: () => Promise<R>,
-		errorMsg: string
+		errorMsg: string = getAppConfig().errors.messages.generic
 	): Promise<ActionResult<R>> {
 		isLoading.set(true);
 
-		notifications.info("Opération en cours...");
+		const APP_CONFIG = getAppConfig();
+		notifications.info(APP_CONFIG.messages.loading);
 
 		try {
 			const data = await action();
@@ -106,7 +107,7 @@ export function useAssociation<T>() {
 		action: AssociationAction<T>,
 		updateFn: UpdateFn<T>,
 		successMsg: string,
-		errorMsg = 'Impossible d\'ajouter la ressource'
+		errorMsg: string = getAppConfig().errors.messages.notFound
 	) {
 		if (!confirm(confirmMsg)) {
 			notifications.warning("Ajout annulé par l'utilisateur.");
@@ -141,7 +142,7 @@ export function useAssociation<T>() {
 		updateFn: UpdateFn<T>,
 		entity: T,
 		successMsg: string,
-		errorMsg = 'Impossible de supprimer la ressource'
+		errorMsg: string = getAppConfig().errors.messages.notFound
 	) {
 		if (!confirm(confirmMsg)) {
 			notifications.warning("Suppression annulée");

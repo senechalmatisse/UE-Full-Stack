@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 	import type { PaginationState } from '$lib/types/pagination';
-	import { PaginationUtils } from '$lib/utils/formatters';
+	import {
+        PaginationUtils,
+        DefaultPaginationStrategy,
+        AppConfigPaginationProvider
+    } from '$lib/utils/pagination';
     import PaginationButton from './PaginationButton.svelte';
 
-	/**
+    /**
 	 * Pagination component.
 	 *
 	 * Provides accessible navigation controls for traversing
@@ -56,14 +60,19 @@
 	 */
 	export let isLoading: boolean = false;
 
+	const strategy = new DefaultPaginationStrategy();
+	const configProvider = new AppConfigPaginationProvider();
+
+    const paginationUtils = new PaginationUtils(configProvider, strategy);
+
 	/** List of pages visible in the pagination, computed dynamically. */
-	$: visiblePages = PaginationUtils.getVisiblePages(
+	$: visiblePages = paginationUtils.getVisiblePages(
 		paginationState.page, 
 		paginationState.totalPages
 	);
 
 	/** Human-readable pagination summary string. */
-	$: paginationInfo = PaginationUtils.getPaginationInfo(
+	$: paginationInfo = paginationUtils.getPaginationInfo(
 		paginationState.page, 
 		paginationState.totalPages
 	);
