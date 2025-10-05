@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { Artist, Event } from "$lib/types/pagination";
-    import { createArtistService } from "$lib/services/artist.service";
-    import { useEventDates } from "$lib/hooks/useEventDates";
+    import type { Artist, Event } from "$lib/core";
+    import { createArtistService } from "$lib/core";
+    import { useEventDates } from "$lib/hooks";
     import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**

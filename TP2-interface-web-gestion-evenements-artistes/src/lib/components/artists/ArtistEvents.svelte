@@ -1,8 +1,7 @@
 <script lang="ts">
-    import type { Artist, Event } from '$lib/types/pagination';
-    import { createEventService } from '$lib/services/event.service';
+    import type { Artist, Event } from '$lib/core';
+    import { createEventService, AppError } from '$lib/core';
     import AssociationManager from '$lib/components/managers/AssociationManager.svelte';
-    import { AppError } from '$lib/services/api.error';
 
     /**
      * ArtistEvents Component

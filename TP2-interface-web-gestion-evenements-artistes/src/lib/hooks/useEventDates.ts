@@ -1,7 +1,5 @@
-import type { Event } from "$lib/types/pagination";
-import type { IDateFormatter } from "$lib/utils/date/date.formatter.interface";
-import { DateFormatterFactory } from "$lib/utils/date/date.formatter.factory";
-import { getAppConfig } from '$lib/config';
+import type { Event, IDateFormatter } from "$lib/core";
+import { getAppConfig, DateServiceFactory } from '$lib/core';
 
 /**
  * Composable for formatting event date ranges.
@@ -10,22 +8,13 @@ import { getAppConfig } from '$lib/config';
  * human-readable strings using the French locale formatter.
  * 
  * @returns An object containing date formatting utilities.
- * 
- * @example
- * ```svelte
- * <script lang="ts">
- *   import { useEventDates } from "$lib/composables/useEventDates";
- *   
- *   const { formatEventDates } = useEventDates();
- *   const formattedDate = formatEventDates(event);
- * </script>
- * ```
  */
-export function useEventDates(formatter?: IDateFormatter) {
+export function useEventDates(dateFormatter?: IDateFormatter) {
     const APP_CONFIG = getAppConfig();
-    const dateFormatter: IDateFormatter =
-        formatter ??
-        DateFormatterFactory.getFormatter({
+
+    const formatter: IDateFormatter =
+        dateFormatter ??
+        DateServiceFactory.getFormatter({
             locale: APP_CONFIG.dates.locale,
             options: APP_CONFIG.dates.format
         });
@@ -41,32 +30,18 @@ export function useEventDates(formatter?: IDateFormatter) {
      *          or "Dates non disponibles" if formatting fails.
      */
     function formatEventDates(event: Event): string {
+        if (!event.startDate || !event.endDate) return "Dates non disponibles";
         try {
-            const start = dateFormatter.format(event.startDate);
-            const end = dateFormatter.format(event.endDate);
+            const start = formatter.format(event.startDate);
+            const end = formatter.format(event.endDate);
             return start === end ? start : `Du ${start} au ${end}`;
         } catch {
             return "Dates non disponibles";
         }
     }
 
-    /**
-     * Formats a single date string using the French locale formatter.
-     * 
-     * @param dateString - ISO date string to format.
-     * @returns Formatted date string or "Date non disponible" on error.
-     */
-    function formatSingleDate(dateString: string): string {
-        try {
-            return dateFormatter.format(dateString);
-        } catch {
-            return "Date non disponible";
-        }
-    }
-
     return {
         formatEventDates,
-        formatSingleDate,
-        dateFormatter
+        dateFormatter: formatter
     };
 }

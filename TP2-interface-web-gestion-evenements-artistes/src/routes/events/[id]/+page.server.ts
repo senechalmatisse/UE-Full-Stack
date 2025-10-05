@@ -1,7 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { createEventService } from '$lib/services/event.service';
-import { AppError } from '$lib/services/api.error';
+import { AppError, createEventService } from '$lib/core';
 
 /** Singleton instance of EventService used for fetching event data. */
 const eventService = createEventService();

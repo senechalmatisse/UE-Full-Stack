@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Artist } from '$lib/types/pagination';
+	import type { Artist } from '$lib/core';
 	import ArtistCard from './ArtistCard.svelte';
 	import EntityList from '$lib/components/shared/lists/EntityList.svelte';
 

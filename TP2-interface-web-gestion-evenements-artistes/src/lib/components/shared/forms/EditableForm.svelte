@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { useSaveAction } from "$lib/hooks/useSaveAction";
+    import { useSaveAction } from "$lib/hooks";
 
     /**
      * EditableForm component.

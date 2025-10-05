@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { useAssociation } from '$lib/hooks/useAssociation';
-    import { AppError } from '$lib/services/api.error';
+    import { useAssociation } from '$lib/hooks';
+    import { AppError } from '$lib/core';
 
     /**
      * Represents a single association item displayed in the list.
@@ -124,7 +124,7 @@
                 newId = '';
                 return item;
             },
-            (item) => (items = [...items, item]),
+            (item: any) => (items = [...items, item]),
             messages.successAdd,
             messages.errorAdd
         );

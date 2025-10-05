@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Event } from "$lib/types/pagination";
-    import { useEventDates } from "$lib/hooks/useEventDates";
+    import type { Event } from "$lib/core";
+    import { useEventDates } from "$lib/hooks";
     import CardBase from "$lib/components/shared/cards/CardBase.svelte";
 
     /**

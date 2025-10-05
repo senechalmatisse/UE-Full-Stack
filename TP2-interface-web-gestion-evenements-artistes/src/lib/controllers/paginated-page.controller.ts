@@ -1,14 +1,14 @@
-import {
-    getPaginationValidator,
-    getDataValidator
-} from '$lib/utils/validation/factories';
 import type {
     PaginationState,
     PaginatedResponse,
     PaginationParams
-} from '$lib/types/pagination';
-import { AppError } from '$lib/services/api.error';
-import { getAppConfig } from '$lib/config';
+} from '$lib/core';
+import {
+    getPaginationValidator,
+    getDataValidator,
+    getAppConfig,
+    AppError
+} from '$lib/core';
 
 /**
  * Generic controller for handling paginated data in SvelteKit pages.

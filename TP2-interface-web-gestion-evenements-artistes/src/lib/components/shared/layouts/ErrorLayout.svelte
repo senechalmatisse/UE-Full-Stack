@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { AppError } from "$lib/core";
 	import { ArrowLeft } from 'lucide-svelte';
-	import { getAppConfig } from "$lib/config";
-	import type { AppError } from "$lib/services/api.error";
+	import { getAppConfig } from "$lib/core";
 
 	/** Type representing possible error formats supported by the layout. */
 	type LayoutError =

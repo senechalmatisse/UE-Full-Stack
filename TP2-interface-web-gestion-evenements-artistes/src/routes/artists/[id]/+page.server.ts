@@ -1,7 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { createArtistService } from '$lib/services/artist.service';
-import { AppError } from '$lib/services/api.error';
+import { AppError, createArtistService } from '$lib/core';
 
 /** Singleton instance of ArtistService used for fetching artist data. */
 const artistService = createArtistService();

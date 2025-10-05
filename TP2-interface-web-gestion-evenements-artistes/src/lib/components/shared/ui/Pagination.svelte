@@ -1,11 +1,11 @@
 <script lang="ts">
+	import type { PaginationState } from '$lib/core';
 	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-	import type { PaginationState } from '$lib/types/pagination';
 	import {
         PaginationUtils,
         DefaultPaginationStrategy,
         AppConfigPaginationProvider
-    } from '$lib/utils/pagination';
+    } from '$lib/core';
     import PaginationButton from './PaginationButton.svelte';
 
     /**

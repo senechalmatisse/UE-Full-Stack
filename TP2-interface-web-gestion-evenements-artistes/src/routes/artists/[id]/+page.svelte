@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Artist, Event } from '$lib/types/pagination';
+    import type { Artist, Event } from '$lib/core';
 	import ArtistDetail from '$lib/components/artists/ArtistDetail.svelte';
 	import ArtistEvents from '$lib/components/artists/ArtistEvents.svelte';
 

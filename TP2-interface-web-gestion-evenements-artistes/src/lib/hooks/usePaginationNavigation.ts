@@ -1,62 +1,37 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
-import { getAppConfig } from '$lib/config';
-import { LoadingStateManager } from '$lib/utils/manager/loading-state.manager';
+import { 
+    ConfigErrorResolver,
+    getAppConfig,
+    LoadingStateManager
+} from '$lib/core';
 import { notifications } from '$lib/stores/notification.store';
-import { ConfigErrorResolver } from '$lib/utils/resolvers/error.resolver';
 
 /**
- * Configuration options for pagination navigation.
+ * Configuration options for {@link usePaginationNavigation}.
  */
 export interface PaginationNavigationOptions {
-	/** Entity type used for navigation (e.g., `"artists"` or `"events"`). */
+    /** Entity type used for navigation (e.g., `"artists"` or `"events"`). */
 	entity: string;
 
-	/** Default number of items per page (defaults to 10 if not provided). */
+    /** Default number of items per page (default: `10`). */
 	defaultSize?: number;
 
-	/** Whether search query support is enabled (adds `search` parameter to query string). */
+    /** Enables search query parameter support when `true`. */
 	withSearch?: boolean;
 }
 
 /**
  * Composable hook for handling pagination navigation in SvelteKit.
  *
- * This hook centralizes logic for:
- * - Navigating between pages with `goto`.
- * - Managing loading and error states.
- * - Handling optional search queries.
+ * Centralizes logic for:
+ * - Page navigation with `goto`
+ * - Managing loading and error states
+ * - Supporting optional search parameters
  *
- * @param options - Pagination navigation options (see {@link PaginationNavigationOptions}).
- * @returns An object with utilities for pagination navigation:
- * - `loadingManager`: Internal loading state manager instance.
- * - `state`: Current loading state snapshot.
- * - `subscribeToLoading`: Subscribe to loading state updates.
- * - `navigateToPage`: Navigate to a specific page (with optional search term).
- * - `resetLoadingState`: Reset the loading state manager.
- *
- * @example
- * ```ts
- * const {
- *   navigateToPage,
- *   subscribeToLoading,
- *   resetLoadingState,
- *   state
- * } = usePaginationNavigation({
- *   entity: 'artists',
- *   defaultSize: 20,
- *   withSearch: true
- * });
- *
- * // Navigate to page 2 with a search term
- * await navigateToPage(2, 'Beatles');
- *
- * // Subscribe to loading state changes
- * const unsubscribe = subscribeToLoading((state) => {
- *   console.log('Loading state:', state);
- * });
- * ```
+ * @param options - Pagination navigation configuration.
+ * @returns Utilities for managing pagination navigation.
  */
 export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	const APP_CONFIG = getAppConfig();
@@ -69,27 +44,24 @@ export function usePaginationNavigation(options: PaginationNavigationOptions) {
 	const loadingManager = new LoadingStateManager(new ConfigErrorResolver());
 	let currentLoadingState = loadingManager.getState();
 
-	/**
-	 * Subscribes to changes in the loading state.
-	 *
-	 * @param callback - A function that receives the new loading state whenever it changes.
-	 * @returns A cleanup function to unsubscribe from updates.
-	 */
+    /**
+     * Subscribes to changes in the loading state.
+     *
+     * @param callback - Function invoked whenever the state changes.
+     * @returns A cleanup function to unsubscribe.
+     */
 	function subscribeToLoading(
 		callback: (state: typeof currentLoadingState) => void
 	): () => void {
 		return loadingManager.subscribe(callback);
 	}
 
-	/**
-	 * Navigates to a specific page while handling loading and error states.
-	 *
-	 * Automatically appends query parameters for `page`, `size`, and optionally `search`.
-	 *
-	 * @async
-	 * @param pageNumber - The target page number.
-	 * @param searchQuery - Optional search term (only applied if `withSearch` is enabled).
-	 */
+    /**
+     * Navigates to a specific page and manages loading and error states.
+     *
+     * @param pageNumber - The page number to navigate to.
+     * @param searchQuery - Optional search query (applied only if `withSearch` is enabled).
+     */
 	async function navigateToPage(
         pageNumber: number,
         searchQuery?: string

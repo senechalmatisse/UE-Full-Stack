@@ -1,7 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { createArtistService } from '$lib/services/artist.service';
-import type { Artist } from '$lib/types/pagination';
-import { PaginatedPageController } from '$lib/controllers/paginated-page.controller';
+import { createArtistService, PaginatedPageController } from '$lib/core';
+import type { Artist } from '$lib/core';
 
 // Controller instance for artists
 const artistsController = new PaginatedPageController<Artist>('artists', createArtistService());

@@ -1,49 +1,35 @@
 import { writable } from "svelte/store";
 import { createEventDispatcher } from "svelte";
-import { getAppConfig } from '$lib/config';
+import { getAppConfig, AppError } from '$lib/core';
 import { notifications } from "$lib/stores/notification.store";
-import { AppError } from "$lib/services/api.error";
 
 /**
- * Hook to handle save/update actions with consistent state management,
- * user notifications, and event dispatching.
+ * Composable for handling save or update actions with state management,
+ * event dispatching, and user notifications.
  *
- * Provides a reactive `isSaving` store and a `run` function
- * that executes an async save action with built-in error handling.
+ * Provides a reactive `isSaving` store and a `run` method that wraps
+ * an async save operation with error handling and feedback.
  *
- * @template T - The type of the saved/updated entity.
+ * @template T - Type of the entity being saved or updated.
  *
- * @param successMessage - The message displayed when the save succeeds.
- * @returns An object containing:
- * - `isSaving`: A writable store indicating whether a save action is in progress.
- * - `run`: A function to execute the save action.
- *
- * @example
- * ```ts
- * const { isSaving, run } = useSaveAction<User>("Profile updated successfully!");
- *
- * async function saveProfile() {
- *   await run(async () => {
- *     return await api.updateUser(profileData);
- *   });
- * }
- * ```
+ * @param successMessage - Message shown when the save action succeeds.
+ * @returns Object containing:
+ * - `isSaving`: Writable store tracking the saving state.
+ * - `run`: Function to execute an async save action safely.
  */
 export function useSaveAction<T = any>(successMessage: string) {
     const isSaving = writable(false);
     const dispatch = createEventDispatcher<{ updated: T }>();
 
     /**
-     * Executes the provided save action with notifications and error handling.
+     * Executes a save or update action with notifications and error handling.
      *
-     * @param action - An async function that performs the save and returns the updated entity, or `null` on failure.
-     * @returns The updated entity of type {@link T}, or `null` if the action fails.
-     *
-     * @throws {AppError} If the action does not return a valid entity.
+     * @param action - Async function that performs the save and returns the updated entity.
+     * @returns The updated entity, or `null` if the operation fails.
+     * @throws {AppError} If the save operation fails.
      */
     async function run(action: () => Promise<T | null>) {
         isSaving.set(true);
-
         const APP_CONFIG = getAppConfig();
         notifications.info(APP_CONFIG.messages.loading);
 
@@ -53,7 +39,6 @@ export function useSaveAction<T = any>(successMessage: string) {
 
             dispatch("updated", updated);
             notifications.success(successMessage);
-
             return updated;
         } catch (err) {
             const message =

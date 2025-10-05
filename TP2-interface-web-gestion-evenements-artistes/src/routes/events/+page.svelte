@@ -3,12 +3,12 @@
     import { afterNavigate } from '$app/navigation';
     import { browser } from '$app/environment';
 
-    import type { Event, PaginationState } from '$lib/types/pagination';
+	import type { Event, PaginationState } from '$lib/core';
 	import EventsList from '$lib/components/events/EventsList.svelte';
 	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
 	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
-	import { usePaginationNavigation } from '$lib/hooks/usePaginationNavigation';
-
+    import { usePaginationNavigation } from '$lib/hooks';
+    
 	/** Props received from the server containing events and pagination state. */
 	export let data: { events: Event[] } & PaginationState;
 
@@ -36,7 +36,7 @@
 	/** Subscribe to loading state changes on mount. */
 	onMount(() => {
 		unsubscribeFromLoading = subscribeToLoading(
-			(state) => (currentLoadingState = state)
+			(state: any) => (currentLoadingState = state)
 		);
 	});
 

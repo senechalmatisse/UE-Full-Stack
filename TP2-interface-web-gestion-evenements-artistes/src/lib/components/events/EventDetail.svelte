@@ -1,11 +1,8 @@
 <script lang="ts">
-    import type { Event } from "$lib/types/pagination";
-    import { createEventService } from "$lib/services/event.service";
-    import { getDataValidator } from "$lib/utils/validation/factories";
-    import EditableForm from "$lib/components/shared/forms/EditableForm.svelte";
-    import { useEntityEditor } from "$lib/hooks/useEntityEditor";
-    import { useDateValidation } from "$lib/hooks/useDateValidation";
-    import { useEventDates } from "$lib/hooks/useEventDates";
+	import type { Event } from "$lib/core";
+	import { useEventDates, useEntityEditor } from "$lib/hooks";
+	import { createEventService, getDataValidator } from "$lib/core";
+	import EditableForm from "$lib/components/shared/forms/EditableForm.svelte";
 
     /**
      * EventDetail Component
@@ -36,26 +33,21 @@
     /** Service instance for performing API requests related to events. */
     const eventService = createEventService();
 
-    /** Injected validator instance (no dépendance statique à getAppConfig). */
+    /** Injected validator instance. */
     const validator = getDataValidator();
 
-    const { saveEntity, dispatch } = useEntityEditor<Event>({
-        entity: event,
-        service: eventService,
-        endpoint: "/events",
-        minLabelLength: 3
-    });
+	const { saveEntity } = useEntityEditor<Event>({
+		entity: event,
+		service: eventService,
+		endpoint: "/events",
+		minLabelLength: 3
+	});
 
-    const { validateDateRange } = useDateValidation();
-    const { formatEventDates, dateFormatter } = useEventDates();
+	const { formatEventDates, dateFormatter } = useEventDates();
 
-    /** Local editable state for the event label (name). */
+	// Local state
     let eventLabel = event.label;
-
-    /** Local editable state for the event start date. */
     let eventStartDate = event.startDate;
-
-    /** Local editable state for the event end date. */
     let eventEndDate = event.endDate;
 
     /**
@@ -69,13 +61,13 @@
      * @throws {AppError} If validation fails or API update is unsuccessful.
      * @returns {Promise<Event>} The updated event object.
      */
-    async function saveEvent() {
-        validateDateRange(eventStartDate, eventEndDate);
+    async function saveEvent(): Promise<Event> {
+		dateFormatter.validateRange(eventStartDate, eventEndDate);
 
         const updated = await saveEntity({
-            label: validator.sanitizeString(eventLabel),
-            startDate: validator.sanitizeString(eventStartDate),
-            endDate: validator.sanitizeString(eventEndDate)
+			label: validator.sanitizeString(eventLabel),
+			startDate: validator.sanitizeString(eventStartDate),
+			endDate: validator.sanitizeString(eventEndDate)
         });
 
         event = { ...event, ...updated };

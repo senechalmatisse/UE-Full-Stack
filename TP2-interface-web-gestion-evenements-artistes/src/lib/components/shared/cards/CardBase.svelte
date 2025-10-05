@@ -77,7 +77,11 @@
     </div>
 
     <footer class="card-footer">
-        <a href={linkHref} class="card-link" aria-label={`Voir les détails de ${title}`}>
+        <a
+            href={linkHref}
+            class="card-link"
+            aria-label={`Voir les détails de ${title}`}
+        >
             <span>{linkLabel}</span>
             <ArrowRight size={16} />
         </a>

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import type { Artist, PaginationState } from '$lib/types/pagination';
+	import type { Artist, PaginationState } from '$lib/core';
 	import ArtistsList from '$lib/components/artists/ArtistsList.svelte';
 	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
 	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
 	import SearchInput from '$lib/components/shared/ui/SearchInput.svelte';
-	import { usePaginationNavigation } from '$lib/hooks/usePaginationNavigation';
+	import { usePaginationNavigation } from '$lib/hooks';
 
 	/**
 	 * Server-provided data for the artists page.
@@ -37,7 +37,7 @@
 	/** Subscribe to loading state changes when the component mounts. */
 	onMount(() => {
 		unsubscribeFromLoading = subscribeToLoading(
-			(state) => (currentLoadingState = state)
+			(state: any) => (currentLoadingState = state)
 		);
 	});
 

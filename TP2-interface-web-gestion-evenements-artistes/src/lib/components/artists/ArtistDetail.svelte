@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { useEntityEditor } from "$lib/hooks/useEntityEditor";
-    import { createArtistService } from "$lib/services/artist.service";
+	import type { Artist } from "$lib/core";
+    import { useEntityEditor } from "$lib/hooks";
+    import { createArtistService } from "$lib/core";
     import EditableForm from "$lib/components/shared/forms/EditableForm.svelte";
-    import type { Artist } from "$lib/types/pagination";
 
     /**
      * ArtistDetail Component
@@ -57,7 +57,7 @@
      * @throws {AppError} If validation fails or API update is unsuccessful.
      * @returns {Promise<Artist>} The updated artist object.
      */
-    async function saveArtist() {
+    async function saveArtist(): Promise<Artist> {
         const updated = await saveEntity({ label: artistLabel });
         artist = updated;
         artistLabel = updated.label;
