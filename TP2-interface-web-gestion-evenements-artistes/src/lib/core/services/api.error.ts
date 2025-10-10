@@ -4,7 +4,7 @@ import { getAppConfig } from '../config';
  * Custom application error for consistent error handling across services.
  *
  * Extends the native Error with an HTTP status code
- * and an optional UI color mapped from {@link APP_CONFIG.errors.colors}.
+ * and an optional UI color mapped from {@link getAppConfig.errors.colors}.
  */
 export class AppError extends Error {
 	code: number;

@@ -39,11 +39,12 @@ export class NavigationUrlBuilder {
     build(targetPath: string, currentUrl: URL): string {
         if (targetPath === "/") return "/";
 
-        const searchParams = new URLSearchParams(currentUrl.searchParams);
+        let searchParams = new URLSearchParams(currentUrl.searchParams);
         const currentPath = currentUrl.pathname as keyof typeof this.config.ignoredParams;
 
         this.strategies.forEach(strategy => {
-            strategy.applyTo(searchParams, currentPath, targetPath, this.config);
+            const result = strategy.applyTo(searchParams, currentPath, targetPath, this.config);
+            if (result instanceof URLSearchParams) searchParams = result;
         });
 
         const query = searchParams.toString();

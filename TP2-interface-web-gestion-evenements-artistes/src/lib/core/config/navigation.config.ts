@@ -11,7 +11,7 @@ export const navigationConfig = {
      *
      * @default true
      */
-    resetPageOnNavigate: true,
+    resetPageOnNavigate: true as boolean,
 
     /**
      * URL parameters to ignore for specific routes.

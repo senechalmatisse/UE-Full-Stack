@@ -28,9 +28,12 @@ export class ConfigErrorResolver implements IErrorResolver {
      */
     resolve(errorCode: number): string {
         const config = getAppConfig();
-        return (
-            config.errors.messages[config.errors.map[errorCode]] ??
-            config.errors.messages.generic
-        );
+
+        const messageKey = config.errors.map?.[errorCode];
+        const message =
+            config.errors.messages?.[messageKey] ??
+            config.errors.messages?.generic;
+
+        return message;
     }
 }

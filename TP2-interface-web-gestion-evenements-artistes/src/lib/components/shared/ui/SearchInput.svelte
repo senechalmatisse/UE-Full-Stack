@@ -31,7 +31,7 @@
 	}>();
 
 	/** Timeout identifier used for debouncing search. */
-	let debounceTimeoutId: number | null = null;
+	let debounceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 	/**
 	 * Handles input change with debounce.

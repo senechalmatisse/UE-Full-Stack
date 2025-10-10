@@ -1,13 +1,14 @@
 import { page } from '$app/stores';
 import { get } from 'svelte/store';
 import { NavigationUrlBuilder } from '$lib/core';
+import type { IUrlBuilder } from '$lib/core';
 
 /**
  * Composable for building navigation URLs in SvelteKit.
  *
  * Uses the Strategy pattern for configurable URL building logic.
  */
-let urlBuilder: NavigationUrlBuilder | null = null;
+let urlBuilder: IUrlBuilder | null = null;
 
 /**
  * Composable for managing URL navigation logic.

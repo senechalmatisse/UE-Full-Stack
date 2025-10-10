@@ -1,13 +1,11 @@
-import type {
-    PaginationState,
-    PaginatedResponse,
-    PaginationParams
-} from '$lib/core';
 import {
     getPaginationValidator,
     getDataValidator,
     getAppConfig,
-    AppError
+    AppError,
+    type PaginationState,
+    type PaginatedResponse,
+    type PaginationParams
 } from '$lib/core';
 
 /**
