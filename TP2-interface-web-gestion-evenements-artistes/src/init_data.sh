@@ -1,25 +1,43 @@
 #!/bin/bash
 
-# Configuration optimisée
 API="http://localhost:8080"
 TIMEOUT=5
 MAX_RETRIES=3
 START_TIME=$(date +%s)
 
-echo "Initialisation rapide des données..."
+echo "Initialisation complète des données..."
 
+# --- Données d'événements variées ---
 declare -A EVENTS
 EVENTS["Festival d'Avignon"]="2025-07-05|2025-07-25"
 EVENTS["Rock en Seine"]="2025-08-22|2025-08-25"
 EVENTS["Jazz à Vienne"]="2025-07-01|2025-07-13"
 EVENTS["Salon Bio & Bien-être"]="2025-09-12|2025-09-14"
+EVENTS["Les Francofolies"]="2025-07-10|2025-07-14"
+EVENTS["Festival de Cannes"]="2025-05-14|2025-05-25"
+EVENTS["Hellfest"]="2025-06-20|2025-06-23"
+EVENTS["Fête de la Musique"]="2025-06-21|2025-06-21"
+EVENTS["Tomorrowland Winter"]="2025-03-15|2025-03-22"
+EVENTS["Paris Games Week"]="2025-10-28|2025-11-02"
 
-ARTISTS=("Spectre Analogique" "Les Ombres Électriques" "Echo du Néant" "Terminal Obscur")
+# --- Données d'artistes variées ---
+ARTISTS=(
+    "Spectre Analogique"
+    "Les Ombres Électriques"
+    "Echo du Néant"
+    "Terminal Obscur"
+    "Neon Mirage"
+    "Luna Spectrum"
+    "Orchestre des Cités Perdues"
+    "Waveform"
+    "Eclipse Harmonie"
+    "Drumbyte"
+)
 
 declare -A EVENT_IDS
 declare -A ARTIST_IDS
 
-# Fonction d'appel API avec log status HTTP
+# --- Fonction générique d'appel API avec gestion d'erreur ---
 api_call() {
     local method=$1
     local endpoint=$2
@@ -35,8 +53,7 @@ api_call() {
         else
             response=$(curl -s -w "HTTPSTATUS:%{http_code}" \
                 --connect-timeout $TIMEOUT --max-time $TIMEOUT \
-                -X "$method" "$API/$endpoint" \
-                -H "Content-Length: 0")
+                -X "$method" "$API/$endpoint")
         fi
 
         body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
@@ -45,88 +62,76 @@ api_call() {
         if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
             echo "$body"
             return 0
-        else
-            echo "Erreur HTTP $status → $endpoint" >&2
-            [ -n "$body" ] && echo "Réponse: $body" >&2
         fi
 
-        if [ $attempt -lt $MAX_RETRIES ]; then
-            echo "Tentative $attempt échouée, retry..." >&2
-            sleep 1
-        fi
+        echo "Tentative $attempt échouée pour $endpoint (HTTP $status)" >&2
+        [ $attempt -lt $MAX_RETRIES ] && sleep 1
     done
 
-    echo "Erreur après $MAX_RETRIES tentatives pour $endpoint" >&2
+    echo "Échec permanent pour $endpoint" >&2
     return 1
 }
 
-# Créer les événements
+# --- Création des événements ---
 echo "Création des événements..."
 for label in "${!EVENTS[@]}"; do
     IFS="|" read start end <<< "${EVENTS[$label]}"
-
     response=$(api_call "POST" "events" "{\"label\":\"$label\",\"startDate\":\"$start\",\"endDate\":\"$end\"}")
+    id=$(echo "$response" | jq -r '.id // empty')
 
-    if [ $? -eq 0 ]; then
-        id=$(echo "$response" | jq -r '.id // empty')
-        if [ -n "$id" ] && [ "$id" != "null" ]; then
-            EVENT_IDS["$label"]=$id
-            echo "$label → $id"
-        else
-            echo "Erreur création $label"
-        fi
+    if [ -n "$id" ]; then
+        EVENT_IDS["$label"]=$id
+        echo "$label -> ID $id"
     else
-        echo "Échec API pour $label"
+        echo "Erreur création événement : $label"
     fi
 done
 
-# Créer les artistes
+# --- Création des artistes ---
 echo "Création des artistes..."
 for label in "${ARTISTS[@]}"; do
     response=$(api_call "POST" "artists" "{\"label\":\"$label\"}")
+    id=$(echo "$response" | jq -r '.id // empty')
 
-    if [ $? -eq 0 ]; then
-        id=$(echo "$response" | jq -r '.id // empty')
-        if [ -n "$id" ] && [ "$id" != "null" ]; then
-            ARTIST_IDS["$label"]=$id
-            echo "$label → $id"
-        else
-            echo "Erreur création $label"
-        fi
+    if [ -n "$id" ]; then
+        ARTIST_IDS["$label"]=$id
+        echo "$label -> ID $id"
     else
-        echo "Échec API pour $label"
+        echo "Erreur création artiste : $label"
     fi
 done
 
-echo "Associations événements ↔ artistes..."
+# --- Associations événements ↔ artistes ---
+echo "Création des associations..."
 
-# Associations optimisées
-associations=(
-    "Festival d'Avignon|Spectre Analogique"
-    "Rock en Seine|Spectre Analogique"
-    "Rock en Seine|Les Ombres Électriques"
-    "Jazz à Vienne|Echo du Néant"
-    "Jazz à Vienne|Spectre Analogique"
-    "Jazz à Vienne|Les Ombres Électriques"
-)
+# Génère au moins une association par artiste
+index=0
+for artist in "${ARTISTS[@]}"; do
+    eventIndex=$((index % ${#EVENTS[@]}))
+    eventName=$(printf "%s\n" "${!EVENTS[@]}" | sed -n "$((eventIndex + 1))p")
+    eventId="${EVENT_IDS[$eventName]}"
+    artistId="${ARTIST_IDS[$artist]}"
 
-for association in "${associations[@]}"; do
-    IFS="|" read event_name artist_name <<< "$association"
-    event_id="${EVENT_IDS[$event_name]}"
-    artist_id="${ARTIST_IDS[$artist_name]}"
-
-    if [ -n "$event_id" ] && [ -n "$artist_id" ]; then
-        response=$(api_call "POST" "events/$event_id/artists/$artist_id")
-        if [ $? -eq 0 ]; then
-            echo "$event_name ↔ $artist_name"
-        else
-            echo "Échec association: $event_name ↔ $artist_name"
-        fi
-    else
-        echo "IDs manquants: $event_name (${event_id:-N/A}) ↔ $artist_name (${artist_id:-N/A})"
+    if [ -n "$eventId" ] && [ -n "$artistId" ]; then
+        api_call "POST" "events/$eventId/artists/$artistId" >/dev/null
+        echo "$artist <-> $eventName"
     fi
+    ((index++))
+done
+
+# Ajout de quelques associations croisées supplémentaires
+EXTRA_ASSOCS=(
+    "Rock en Seine|Neon Mirage"
+    "Hellfest|Drumbyte"
+    "Les Francofolies|Luna Spectrum"
+    "Festival d'Avignon|Orchestre des Cités Perdues"
+)
+for assoc in "${EXTRA_ASSOCS[@]}"; do
+    IFS="|" read event artist <<< "$assoc"
+    eid="${EVENT_IDS[$event]}"
+    aid="${ARTIST_IDS[$artist]}"
+    [ -n "$eid" ] && [ -n "$aid" ] && api_call "POST" "events/$eid/artists/$aid" >/dev/null
 done
 
 END_TIME=$(date +%s)
-DURATION=$((END_TIME - START_TIME))
-echo "Initialisation terminée en ${DURATION} secondes!"
+echo "Initialisation terminée en $((END_TIME - START_TIME)) secondes !"

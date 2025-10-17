@@ -23,7 +23,39 @@ Développement de la partie frontend d’une application web consommant une API 
 - **Gestion des erreurs serveur** (codes 400, 401, 404, 500) avec messages clairs
 - **UX/UI** : responsive design, transitions douces, notifications visuelles
 
-### Lancement de l’API :
-- Exécution via `java -jar event-0.0.1-SNAPSHOT.jar`
-- Documentation accessible sur [Swagger UI](http://localhost:8080/swagger-ui/index.html)
+### Lancement du projet :
+L’environnement complet (API + frontend) est désormais orchestré à l’aide de Docker Compose, ce qui simplifie le déploiement et garantit la cohérence entre les services.
 
+#### Prérequis (configuration testée perso)
+
+* **Docker** ≥ 28.5
+* **Docker Compose** ≥ 2.4
+
+#### Démarrage des services
+
+Depuis la racine du projet, exécuter :
+
+```bash
+docker compose up --build
+```
+
+Cela lancera :
+
+* **L’API Spring Boot** sur [`http://localhost:8080`](http://localhost:8080)
+* **Le frontend (Svelte/Vite)** sur [`http://localhost:5173`](http://localhost:5173)
+
+#### Arrêt des services
+
+```bash
+docker compose down
+```
+
+#### Nettoyage complet (conteneurs, volumes, cache)
+
+```bash
+docker compose down -v --rmi all
+```
+
+### 📚 Documentation de l’API
+
+Une fois le conteneur `api` démarré, la documentation est accessible via : [Swagger UI](http://localhost:8080/swagger-ui/index.html)
