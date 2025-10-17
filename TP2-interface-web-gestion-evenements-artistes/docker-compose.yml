@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: event-backend
+    container_name: tp2-backend
     ports:
       - "8080:8080"
     networks:
@@ -25,7 +25,7 @@ services:
       args:
         - VITE_API_BASE_URL_CLIENT=http://localhost:8080
         - VITE_API_BASE_URL_SERVER=http://backend:8080
-    container_name: event-frontend
+    container_name: tp2-frontend
     ports:
       - "5173:5173"
     networks:
