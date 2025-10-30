@@ -8,7 +8,10 @@ export type {
 } from "./formatting";
 export {
     DateService,
-    DateServiceFactory
+    DateServiceFactory,
+    ApiDateConverter,
+    ApiDateFormat,
+    ApiDateHelpers
 } from "./formatting";
 
 // API & Services
@@ -87,3 +90,13 @@ export {
     ParameterFilterStrategy,
     NavigationUrlBuilder
 } from "./navigation";
+
+// Form
+export type {
+    IFormField,
+    IEntityCreationConfig
+} from "./forms";
+export {
+    EntityCreationConfigBuilder,
+    EntityConfigFactory
+} from "./forms";

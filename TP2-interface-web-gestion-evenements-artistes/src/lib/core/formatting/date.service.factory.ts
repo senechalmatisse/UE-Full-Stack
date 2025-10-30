@@ -16,7 +16,7 @@ import type { DateFormatterOptions } from "./formatting.types";
  */
 export class DateServiceFactory {
     /** Internal cache for reusable formatters. */
-    private static formatters = new Map<string, IDateFormatter>();
+    private static formatters: Record<string, IDateFormatter> = {};
 
     /**
      * Returns a cached or new {@link DateService} instance for the given configuration.
@@ -27,10 +27,8 @@ export class DateServiceFactory {
     static getFormatter(config: DateFormatterOptions): IDateFormatter {
         const key = `${config.locale}-${JSON.stringify(config.options)}`;
 
-        if (!this.formatters.has(key)) {
-            this.formatters.set(key, new DateService(config));
-        }
+        if (!(key in this.formatters)) this.formatters[key] = new DateService(config);
 
-        return this.formatters.get(key)!;
+        return this.formatters[key];
     }
 }

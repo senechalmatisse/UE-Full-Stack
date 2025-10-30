@@ -11,3 +11,4 @@ export type { DateFormatterOptions } from "./formatting.types";
 
 export { DateService } from "./date.service";
 export { DateServiceFactory } from "./date.service.factory";
+export { ApiDateConverter, ApiDateFormat, ApiDateHelpers } from "./date.converter";

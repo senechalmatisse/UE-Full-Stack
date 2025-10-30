@@ -142,7 +142,6 @@
 	.search-form {
 		display: flex;
 		gap: 0.5rem;
-		margin-bottom: 2rem;
         width: 100%;
         max-width: 400px;
 	}

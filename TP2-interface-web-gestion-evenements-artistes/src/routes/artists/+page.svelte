@@ -5,6 +5,7 @@
 	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
 	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
 	import SearchInput from '$lib/components/shared/ui/SearchInput.svelte';
+    import CreateButton from '$lib/components/shared/ui/CreateButton.svelte';
 	import { usePaginationNavigation } from '$lib/hooks';
 
 	/**
@@ -105,14 +106,17 @@
 </svelte:head>
 
 <section id="artists-section">
-	<header id="artists-header">
+	<header class="header-content">
 		<h1 class="artists-title">Liste des artistes</h1>
-		<SearchInput
-			placeholder="Rechercher un artiste..."
-			searchValue={currentSearchTerm}
-			on:search={(e) => handleSearch(e.detail)}
-			on:clear={() => handleSearch('')}
-		/>
+        <div class="header-controls">
+			<CreateButton href="/artists/create" label="Nouvel artiste" />
+            <SearchInput
+                placeholder="Rechercher un artiste..."
+                searchValue={currentSearchTerm}
+                on:search={(e) => handleSearch(e.detail)}
+                on:clear={() => handleSearch('')}
+            />
+		</div>
 	</header>
 
 	<div>
@@ -145,33 +149,50 @@
 </section>
 
 <style>
-    #artists-header {
+    #artists-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .header-content {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        margin-bottom: 2rem;
+        gap: 1.5rem;
     }
 
-	#artists-section {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem;
-	}
+    .artists-title {
+        text-align: center;
+        margin: 0;
+        color: #333;
+        font-size: 2.5rem;
+    }
 
-	.artists-title {
-		text-align: center;
-		margin-bottom: 2rem;
-		color: #333;
-		font-size: 2.5rem;
-	}
+    .header-controls {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        width: 100%;
+        flex-wrap: wrap;
+    }
 
-	@media (max-width: 768px) {
-		#artists-section {
-			padding: 1rem;
-		}
+    @media (max-width: 768px) {
+        #artists-section {
+            padding: 1rem;
+        }
 
-		.artists-title {
-			font-size: 2rem;
-		}
-	}
+        .artists-title {
+            font-size: 2rem;
+        }
+
+        .header-controls {
+            flex-direction: column;
+            width: 100%;
+        }
+    }
 </style>

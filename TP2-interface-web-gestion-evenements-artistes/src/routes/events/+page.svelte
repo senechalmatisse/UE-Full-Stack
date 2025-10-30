@@ -7,8 +7,10 @@
 	import EventsList from '$lib/components/events/EventsList.svelte';
 	import Pagination from '$lib/components/shared/ui/Pagination.svelte';
 	import LoadingState from '$lib/components/shared/states/LoadingState.svelte';
+	import CreateButton from '$lib/components/shared/ui/CreateButton.svelte';
+
     import { usePaginationNavigation } from '$lib/hooks';
-    
+
 	/** Props received from the server containing events and pagination state. */
 	export let data: { events: Event[] } & PaginationState;
 
@@ -45,9 +47,7 @@
      * Ensures that navigation transitions properly reset loading.
      */
     afterNavigate(() => {
-        if (browser) {
-            loadingManager.stopLoading();
-        }
+        if (browser) loadingManager.stopLoading();
     });
 
 	/** Unsubscribe from loading state changes on destroy. */
@@ -92,7 +92,10 @@
 
 <section id="events-section">
 	<header>
-		<h1 class="events-title">Liste des événements</h1>
+		<div class="header-content">
+			<h1 class="events-title">Liste des événements</h1>
+			<CreateButton href="/events/create" label="Nouvel événement" />
+		</div>
 	</header>
 
 	<div>
@@ -126,6 +129,14 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
+    }
+
+    .header-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
     }
 
     .events-title {
