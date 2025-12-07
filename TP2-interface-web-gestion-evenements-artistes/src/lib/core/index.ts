@@ -100,3 +100,11 @@ export {
     EntityCreationConfigBuilder,
     EntityConfigFactory
 } from "./forms";
+
+// Deletion
+export type { EntityDeletionConfig } from './deletion';
+export {
+    EntityDeletionConfigFactory,
+    EntityDeletionService,
+    EntityDeletionServiceFactory
+} from './deletion';

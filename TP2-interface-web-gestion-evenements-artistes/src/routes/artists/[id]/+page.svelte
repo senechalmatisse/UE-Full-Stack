@@ -1,7 +1,9 @@
 <script lang="ts">
     import type { Artist, Event } from '$lib/core';
+    import { EntityDeletionConfigFactory, createArtistService } from '$lib/core';
 	import ArtistDetail from '$lib/components/artists/ArtistDetail.svelte';
 	import ArtistEvents from '$lib/components/artists/ArtistEvents.svelte';
+    import EntityDeletionHandler from '$lib/components/shared/forms/EntityDeletionHandler.svelte';
 
     /**
      * Props received from the server load function.
@@ -14,6 +16,14 @@
 
     /** Local state representing the list of events associated with the artist. */
 	let events: Event[] = data.events;
+
+    const artistService = createArtistService();
+
+    $: deletionConfig = EntityDeletionConfigFactory.createArtistDeletionConfig(
+        artist.id,
+        artistService,
+        events.length
+    );
 </script>
 
 <svelte:head>
@@ -27,6 +37,7 @@
 <section id="artist-detail">
 	<header>
 		<h1 id="artist-title">{artist.label}</h1>
+        <EntityDeletionHandler config={deletionConfig} variant="warning" />
 	</header>
 
 	<div class="artist-detail-layout">

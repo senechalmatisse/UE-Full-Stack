@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Event } from '$lib/core';
+    import { EntityDeletionConfigFactory, createEventService } from '$lib/core';
 	import EventDetail from '$lib/components/events/EventDetail.svelte';
 	import EventArtists from '$lib/components/events/EventArtists.svelte';
+    import EntityDeletionHandler from '$lib/components/shared/forms/EntityDeletionHandler.svelte';
 
 	/** Props received from the server containing the event details. */
 	export let data: { event: Event };
@@ -11,6 +13,14 @@
 	 * Updated when child components emit changes.
 	 */
 	let event: Event = data.event;
+
+    const eventService = createEventService();
+
+    $: deletionConfig = EntityDeletionConfigFactory.createEventDeletionConfig(
+        event.id,
+        eventService,
+        event.artists?.length || 0
+    );
 </script>
 
 <svelte:head>
@@ -24,6 +34,7 @@
 <section id="event-detail">
 	<header>
 		<h1 id="event-title">{event.label}</h1>
+        <EntityDeletionHandler config={deletionConfig} variant="warning" />
 	</header>
 
     <div class="event-detail-layout">
@@ -46,6 +57,13 @@
         margin-bottom: 2rem;
     }
 
+    .event-detail > header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
     /* === Layout === */
     .event-detail-layout {
         display: grid;
@@ -56,6 +74,11 @@
     @media (max-width: 768px) {
         .event-detail-layout {
             grid-template-columns: 1fr;
+        }
+
+        .event-detail > header {
+            flex-direction: column;
+            align-items: flex-start;
         }
     }
 </style>
