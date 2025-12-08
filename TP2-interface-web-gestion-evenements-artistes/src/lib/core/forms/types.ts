@@ -4,7 +4,7 @@
 export interface IFormField<T = any> {
     name: keyof T;
     label: string;
-    type: 'text' | 'date' | 'datetime-local' | 'textarea' | 'email';
+    type: 'text' | 'date' | 'datetime-local' | 'textarea';
     placeholder?: string;
     required?: boolean;
     validation?: (value: any) => string | null;
