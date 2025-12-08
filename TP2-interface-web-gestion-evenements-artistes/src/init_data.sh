@@ -9,16 +9,16 @@ echo "Initialisation complète des données..."
 
 # --- Données d'événements ---
 declare -A EVENTS
-EVENTS["Festival d'Avignon"]="2025-07-05|2025-07-25"
-EVENTS["Rock en Seine"]="2025-08-22|2025-08-25"
-EVENTS["Jazz à Vienne"]="2025-07-01|2025-07-13"
-EVENTS["Salon Bio & Bien-être"]="2025-09-12|2025-09-14"
-EVENTS["Les Francofolies"]="2025-07-10|2025-07-14"
-EVENTS["Festival de Cannes"]="2025-05-14|2025-05-25"
-EVENTS["Hellfest"]="2025-06-20|2025-06-23"
-EVENTS["Fête de la Musique"]="2025-06-21|2025-06-21"
-EVENTS["Tomorrowland Winter"]="2025-03-15|2025-03-22"
-EVENTS["Paris Games Week"]="2025-10-28|2025-11-02"
+EVENTS["Festival d'Avignon"]="2026-07-05|2026-07-25"
+EVENTS["Rock en Seine"]="2026-08-22|2026-08-25"
+EVENTS["Jazz à Vienne"]="2026-07-01|2026-07-13"
+EVENTS["Salon Bio & Bien-être"]="2026-09-12|2026-09-14"
+EVENTS["Les Francofolies"]="2026-07-10|2026-07-14"
+EVENTS["Festival de Cannes"]="2026-05-14|2026-05-25"
+EVENTS["Hellfest"]="2026-06-20|2026-06-23"
+EVENTS["Fête de la Musique"]="2026-06-21|2026-06-21"
+EVENTS["Tomorrowland Winter"]="2026-03-15|2026-03-22"
+EVENTS["Paris Games Week"]="2026-10-28|2026-11-02"
 
 # --- Données d'artistes ---
 ARTISTS=(

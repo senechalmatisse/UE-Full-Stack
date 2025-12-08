@@ -20,8 +20,8 @@ export class EntityConfigFactory {
             .addTextField('label', 'Nom de l\'artiste', {
                 placeholder: 'Ex: The Rolling Stones',
                 validation: (value) => {
-                    if (!value || value.trim().length < 2) {
-                        return 'Le nom doit contenir au moins 2 caractères';
+                    if (!value || value.trim().length < 3) {
+                        return 'Le nom doit contenir au moins 3 caractères';
                     }
                     if (value.length > 100) {
                         return 'Le nom ne peut pas dépasser 100 caractères';
