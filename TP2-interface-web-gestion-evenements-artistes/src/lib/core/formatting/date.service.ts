@@ -58,9 +58,15 @@ export class DateService implements IDateFormatter {
         if (!this.isValid(startDate) || !this.isValid(endDate)) {
             throw new AppError(400, "Les dates doivent être valides");
         }
-        if (new Date(startDate) >= new Date(endDate)) {
-            throw new AppError(400, "La date de fin doit être après celle du début");
-        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start < today) throw new AppError(400, "La date de début ne peut pas être antérieure à aujourd'hui");
+
+        if (start >= end) throw new AppError(400, "La date de fin doit être après celle du début");
     }
 
     /**
