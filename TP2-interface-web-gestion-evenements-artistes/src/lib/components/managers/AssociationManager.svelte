@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { useAssociation } from '$lib/hooks';
     import { AppError } from '$lib/core';
 
@@ -36,47 +37,16 @@
         errorRemove: string;
     };
 
-    /**
-     * AssociationManager Component
-     *
-     * This component manages a list of associated items with support for:
-     * - Adding new items by ID
-     * - Removing existing items
-     * - Confirmation dialogs and feedback messages
-     * - Loading state handling
-     *
-     * It relies on a custom hook (`useAssociation`) to abstract entity addition/removal logic.
-     *
-     * @example
-     * <AssociationManager
-     *   title="Associated Artists"
-     *   emptyLabel="No artists linked"
-     *   inputLabel="Artist ID"
-     *   inputPlaceholder="Enter artist ID"
-     *   messages={{
-     *     confirmAdd: "Do you want to add this artist?",
-     *     confirmRemove: "Remove this artist?",
-     *     successAdd: "Artist added successfully!",
-     *     successRemove: "Artist removed successfully!",
-     *     errorAdd: "Could not add artist.",
-     *     errorRemove: "Could not remove artist."
-     *   }}
-     *   items={artists}
-     *   onAdd={addArtist}
-     *   onRemove={removeArtist}
-     * />
-     */
-
     /** Section title displayed above the association list */
     export let title: string;
 
     /** Label displayed when the list is empty */
     export let emptyLabel: string;
 
-    /** Label for the input field used to add a new item */
+    /** Label for the select field used to add a new item */
     export let inputLabel: string;
 
-    /** Placeholder text for the input field */
+    /** Placeholder text for the select field */
     export let inputPlaceholder: string;
 
     /** Object containing all feedback and confirmation messages */
@@ -98,22 +68,56 @@
      */
     export let onRemove: (item: Item) => Promise<void>;
 
-    /** Local state: value of the new item ID input */
-    let newId = '';
+    /**
+     * Callback to fetch all available items for selection.
+     * @returns A list of all items that can be associated.
+     */
+    export let onFetchAvailable: () => Promise<Item[]>;
+
+    /** Local state: selected item ID from the dropdown */
+    let selectedId = '';
+
+    /** Local state: list of available items to select from */
+    let availableItems: Item[] = [];
+
+    /** Local state: filtered list excluding already associated items */
+    let selectableItems: Item[] = [];
 
     /** Hook that provides loading state and add/remove entity logic */
     const { isLoading, addEntity, removeEntity } = useAssociation<Item>();
 
     /**
+     * Fetch available items on component mount
+     */
+    onMount(async () => {
+        try {
+            availableItems = await onFetchAvailable();
+            updateSelectableItems();
+        } catch (err) {
+            console.error('Failed to fetch available items:', err);
+        }
+    });
+
+    /**
+     * Update the list of selectable items by excluding already associated ones
+     */
+    function updateSelectableItems() {
+        const associatedIds = new Set(items.map(item => item.id));
+        selectableItems = availableItems.filter(item => !associatedIds.has(item.id));
+    }
+
+    /**
+     * Reactively update selectable items when associated items change
+     */
+    $: if (availableItems.length > 0) {
+        updateSelectableItems();
+    }
+
+    /**
      * Handles form submission for adding a new item.
-     * - Trims the input ID
-     * - Confirms the action with the user
-     * - Calls the `onAdd` callback
-     * - Updates the list and resets the input field
-     * - Provides success/error feedback
      */
     async function handleAdd() {
-        const id = newId.trim();
+        const id = selectedId.trim();
         if (!id) return;
 
         await addEntity(
@@ -121,7 +125,7 @@
             async () => {
                 const item = await onAdd(id);
                 if (!item) throw new AppError(500, messages.errorAdd);
-                newId = '';
+                selectedId = '';
                 return item;
             },
             (item: any) => (items = [...items, item]),
@@ -132,12 +136,6 @@
 
     /**
      * Handles removing an existing item from the list.
-     * - Confirms the action with the user
-     * - Calls the `onRemove` callback
-     * - Updates the list
-     * - Provides success/error feedback
-     *
-     * @param item - The item to remove
      */
     async function handleRemove(item: Item) {
         await removeEntity(
@@ -176,21 +174,28 @@
 
     <form class="association-form" on:submit|preventDefault={handleAdd}>
         <label for="newId" class="association-form-label">{inputLabel}</label>
-        <input
-            id="newId"
-            class="association-form-input"
-            placeholder={inputPlaceholder}
-            bind:value={newId}
-            required
-            autocomplete="off"
-        />
-        <button
-            type="submit"
-            class="association-form-submit"
-            disabled={$isLoading}
-        >
-            Ajouter
-        </button>
+        {#if selectableItems.length === 0}
+            <p class="association-no-items">Aucun élément disponible à associer</p>
+        {:else}
+            <select
+                id="newId"
+                class="association-form-select"
+                bind:value={selectedId}
+                required
+            >
+                <option value="" disabled selected>{inputPlaceholder}</option>
+                {#each selectableItems as item (item.id)}
+                    <option value={item.id}>{item.label}</option>
+                {/each}
+            </select>
+            <button
+                type="submit"
+                class="association-form-submit"
+                disabled={$isLoading || !selectedId}
+            >
+                Ajouter
+            </button>
+        {/if}
     </form>
 </section>
 
@@ -252,6 +257,16 @@
         margin-bottom: 1.5rem;
     }
 
+    .association-no-items {
+        font-size: 0.95rem;
+        color: #7f8c8d;
+        text-align: center;
+        font-style: italic;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+    }
+
     /* === Form === */
     .association-form {
         display: flex;
@@ -265,19 +280,27 @@
         color: #34495e;
     }
 
-    .association-form-input {
+    .association-form-select {
         padding: 0.6rem 0.75rem;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 1rem;
         box-sizing: border-box;
         transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        background-color: white;
+        cursor: pointer;
     }
 
-    .association-form-input:focus {
+    .association-form-select:focus {
         border-color: #3498db;
         box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         outline: none;
+    }
+
+    .association-form-select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f5f5f5;
     }
 
     /* === Buttons === */

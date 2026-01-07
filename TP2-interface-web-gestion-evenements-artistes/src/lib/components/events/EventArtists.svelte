@@ -9,21 +9,12 @@
      * This component manages the association between a specific event and multiple artists.
      * It allows:
      * - Displaying artists currently associated with the event
-     * - Adding new artists to the event
+     * - Adding new artists to the event (from available artists)
      * - Removing existing artists from the event
-     *
-     * It delegates UI rendering and list management to the `AssociationManager` component.
-     *
-     * @example
-     * <EventArtists
-     *   event={selectedEvent}
-     * />
      */
 
     /**
      * The event for which associated artists are being managed.
-     * The `artists` property of this object is two-way bound (`bind:items`),
-     * so the list updates automatically when artists are added or removed.
      */
     export let event: Event;
 
@@ -34,19 +25,28 @@
     const artistService = createArtistService();
 
     /**
+     * Fetches all available artists from the API.
+     * @returns A list of all artists in the system.
+     */
+    async function fetchAvailableArtists(): Promise<Artist[]> {
+        try {
+            const response = await artistService.getAll('/artists', { 
+                page: 0, 
+                size: 1000 
+            });
+            return response.content;
+        } catch (err) {
+            console.error('Failed to fetch artists:', err);
+            return [];
+        }
+    }
+
+    /**
      * Adds an artist to the current event.
-     *
-     * - Fetches the artist by ID
-     * - Throws an error if the artist does not exist
-     * - Associates the artist with the event
-     *
-     * @param id - The identifier of the artist to be added.
-     * @returns The artist object once successfully associated with the event.
-     * @throws AppError if the artist cannot be found or if the operation fails.
      */
     async function addArtist(id: string) {
         const artist = await artistService.getById('/artists', id);
-        if (!artist)  throw new AppError(404, "Artiste introuvable");
+        if (!artist) throw new AppError(404, "Artiste introuvable");
 
         await eventService.addArtistToEvent(event.id, artist.id);
         return artist;
@@ -54,9 +54,6 @@
 
     /**
      * Removes an artist from the current event.
-     *
-     * @param artist - The artist to be removed from the event.
-     * @returns A promise that resolves once the removal is completed.
      */
     async function removeArtist(artist: Artist) {
         await eventService.removeArtistFromEvent(event.id, artist.id);
@@ -67,7 +64,7 @@
     title="Artiste(s) associé.e(s)"
     emptyLabel="Aucun artiste"
     inputLabel="Ajouter un artiste"
-    inputPlaceholder="L'ID de l'artiste"
+    inputPlaceholder="Sélectionnez un artiste"
     messages={{
         confirmAdd: "Voulez-vous ajouter cet(te) artiste ?",
         confirmRemove: "Retirer cet(te) artiste de cet événement ?",
@@ -78,5 +75,6 @@
     }}
     onAdd={addArtist}
     onRemove={removeArtist}
+    onFetchAvailable={fetchAvailableArtists}
     bind:items={event.artists}
 />

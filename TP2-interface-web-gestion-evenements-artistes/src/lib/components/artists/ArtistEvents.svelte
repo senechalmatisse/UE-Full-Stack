@@ -9,16 +9,8 @@
      * This component manages the association between a specific artist and multiple events.
      * It allows:
      * - Displaying currently associated events
-     * - Adding the artist to new events
+     * - Adding the artist to new events (from available events)
      * - Removing the artist from existing events
-     *
-     * Internally, it delegates UI rendering and interaction to the `AssociationManager` component.
-     *
-     * @example
-     * <ArtistEvents
-     *   artist={artist}
-     *   events={artistEvents}
-     * />
      */
 
     /** The artist for whom events are being managed. */
@@ -26,8 +18,6 @@
 
     /**
      * The list of events currently associated with the artist.
-     * This list is two-way bound (`bind:items`) so it updates automatically
-     * when events are added or removed.
      */
     export let events: Event[];
 
@@ -35,11 +25,24 @@
     const eventService = createEventService();
 
     /**
+     * Fetches all available events from the API.
+     * @returns A list of all events in the system.
+     */
+    async function fetchAvailableEvents(): Promise<Event[]> {
+        try {
+            const response = await eventService.getAll('/events', { 
+                page: 0, 
+                size: 1000 
+            });
+            return response.content;
+        } catch (err) {
+            console.error('Failed to fetch events:', err);
+            return [];
+        }
+    }
+
+    /**
      * Adds the current artist to an event.
-     *
-     * @param id - The identifier of the event to which the artist should be added.
-     * @returns The updated event object after the association is created.
-     * @throws AppError if the event cannot be found or the operation fails.
      */
     async function addEvent(id: string) {
         await eventService.addArtistToEvent(id, artist.id);
@@ -50,9 +53,6 @@
 
     /**
      * Removes the current artist from a given event.
-     *
-     * @param item - An object containing the event ID and label.
-     * @returns A promise that resolves when the artist is successfully removed.
      */
     async function removeEvent(item: { id: string; label: string }) {
         await eventService.removeArtistFromEvent(item.id, artist.id);
@@ -63,7 +63,7 @@
     title="Événement(s) associé(s)"
     emptyLabel="Aucun événement"
     inputLabel="Ajouter un événement"
-    inputPlaceholder="L'ID de l'événement"
+    inputPlaceholder="Sélectionnez un événement"
     messages={{
         confirmAdd: "Voulez-vous ajouter cet événement ?",
         confirmRemove: "Retirer cet événement de cet(te) artiste ?",
@@ -74,5 +74,6 @@
     }}
     onAdd={addEvent}
     onRemove={removeEvent}
+    onFetchAvailable={fetchAvailableEvents}
     bind:items={events}
 />

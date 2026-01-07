@@ -145,9 +145,6 @@
 				ApiDateFormat.LOCAL_DATE
 			);
 
-			console.log('Payload avant conversion:', payload);
-			console.log('Payload après conversion:', convertedPayload);
-
 			const created = await config.createService(convertedPayload);
 
 			if (!created) {
@@ -164,7 +161,6 @@
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Une erreur est survenue';
 			notifications.error(`Erreur lors de la création : ${message}`);
-			console.error('Erreur de création:', err);
 		} finally {
 			isSubmitting = false;
 		}
